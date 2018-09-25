@@ -1,0 +1,9 @@
+*.pyc
+*.pdf
+*.txt
+.ipynb_checkpoints/
+*.svn
+*.rel
+*.qry
+indexes
+*__pycache__

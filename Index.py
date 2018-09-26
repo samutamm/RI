@@ -3,7 +3,7 @@ from ParserCACM import ParserCACM
 from TextRepresenter import PorterStemmer
 import cPickle
 import numpy as np
-
+from ast import literal_eval
 
 def get_dictionary_length(count):
     """ 
@@ -38,11 +38,13 @@ class InvertedIndexPlaces:
             self.word_lengths[i] = get_dictionary_length(c)
         for i, place in enumerate(self.word_lengths):
             self.word_start_indexes[i:] += place
-        print(self.word_start_indexes)
             
     def get_place_for_word(self, word):
         idx = self.word2fileplace[word]
-        return int(self.fileplaces[idx]),int(self.word_lengths[idx]) 
+        return int(self.word_start_indexes[idx]),int(self.word_lengths[idx])
+    
+    def get_indexfile_total_length(self):
+        return self.word_start_indexes[-1] + self.word_lengths[-1] # the last word and it's length
 
 class Index:
     
@@ -130,22 +132,47 @@ class Index:
             
         iip = InvertedIndexPlaces(dictionary)
         
-        with open(r"indexes/" + self.name + "_index", "rb") as doc_file:
-            for doc_id in index_places_doc.keys():
-                doc_file.seek(index_places_doc[doc_id])
-                tfs = cPickle.Unpickler(doc_file).load()
+        with open(r"indexes/" + str(self.name) + "_inversed", "wb") as inversed_writer:
+            with open(r"indexes/" + str(self.name) + "_inversed", "rb") as inversed_reader:
+                with open(r"indexes/" + self.name + "_index", "rb") as doc_file:
+                    for doc_id in index_places_doc.keys():
+                        doc_file.seek(index_places_doc[doc_id])
+                        tfs = cPickle.Unpickler(doc_file).load()
 
-                iip.add_file_to_word(doc_id, tfs.keys())
-            iip.count_word_fileplaces()
-            
-            for doc_id in index_places_doc.keys():
-                doc_file.seek(index_places_doc[doc_id])
-                tfs = cPickle.Unpickler(doc_file).load()
-                
-                for word in tfs.keys():
-                    place, length = iip.get_place_for_word(word)
-                    # update this place
-                    # TODO
+                        iip.add_file_to_word(doc_id, tfs.keys())
+                    iip.count_word_fileplaces()
+                    # write inversed index full of space
+                    file_total_length = iip.get_indexfile_total_length()
+                    inversed_writer.seek(0)
+                    inversed_writer.write(' ' * file_total_length)
+                    
+                    for doc_id in index_places_doc.keys():
+                        doc_file.seek(index_places_doc[doc_id])
+                        tfs = cPickle.Unpickler(doc_file).load()
+                        
+                        print(doc_id)
+                        for word in tfs.keys():
+                            place, length = iip.get_place_for_word(word)
+                            
+                            #standardize the length of filename
+                            filename = ' ' * (4 - len(doc_id)) + doc_id
+                            
+                            # check old value
+                            inversed_reader.seek(place)
+                            old_string_value = inversed_reader.read(length).strip()
+                            
+                            if len(old_string_value) == 0: # no hits yet
+                                old_dico = {}
+                            else:
+                                old_dico = literal_eval(old_string_value)
+                            
+                            old_dico[filename] = format(tfs[word],'04d')
+                                                      
+                            # write result back
+                            updated_dico = str(old_dico)
+                            correct_length_updated_dico = updated_dico + ' ' * (length - len(updated_dico))
+                            inversed_writer.seek(place)
+                            inversed_writer.write(correct_length_updated_dico)
 
            
     def indexation(self):

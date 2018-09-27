@@ -1,9 +1,11 @@
-
 from ParserCACM import ParserCACM
 from TextRepresenter import PorterStemmer
 import cPickle
 import numpy as np
 from ast import literal_eval
+     
+
+
 
 def get_dictionary_length(count):
     """ 
@@ -12,7 +14,7 @@ def get_dictionary_length(count):
         one (fixed length) element has 16, then 32, 48 etc..
     """
     if count == 0:
-        return 2
+        return 0
     return count * 16
 
 class InvertedIndexPlaces:
@@ -37,14 +39,24 @@ class InvertedIndexPlaces:
             c = int(count)
             self.word_lengths[i] = get_dictionary_length(c)
         for i, place in enumerate(self.word_lengths):
-            self.word_start_indexes[i:] += place
+            self.word_start_indexes[(i+1):] += place
             
     def get_place_for_word(self, word):
         idx = self.word2fileplace[word]
-        return int(self.word_start_indexes[idx]),int(self.word_lengths[idx])
+        start, length = int(self.word_start_indexes[idx]),int(self.word_lengths[idx])
+        next_start = int(self.word_start_indexes[idx + 1]) if idx < len(self.word_start_indexes) -1 else start + length + 1
+        return start, length, next_start
     
     def get_indexfile_total_length(self):
         return self.word_start_indexes[-1] + self.word_lengths[-1] # the last word and it's length
+    
+    def save_places_to_file(self, filename):
+        with open(filename, "wb") as f:
+            pickler = cPickle.Pickler(f)
+            pickler.dump({'word2fileplace':self.word2fileplace, 
+                          'word_start_indexes':self.word_start_indexes, 
+                          'word_lengths':self.word_lengths
+                         })
 
 class Index:
     
@@ -92,39 +104,6 @@ class Index:
             cPickle.dump(dictionary, output_file)
         return dictionary
     
-    def inversedIndexation2(self, dictionary):
-        with open(r"indexes/" + self.name + self.index_places_doc) as index_places_doc_file:
-            unpickler = cPickle.Unpickler(index_places_doc_file)
-            index_places_doc = unpickler.load()
-            
-        with open(r"indexes/" + self.name + "_index", "rb") as doc_file:
-            stem_file = open(r"indexes/" + str(self.name) + "_inversed", "wb")
-            pickler = cPickle.Pickler(stem_file)
-            stem_start_indexes = {}
-            n = len(dictionary)
-            
-            for i, word in enumerate(dictionary):
-                files = {}
-
-                if i % 100 == 0:
-                    print(i / n * 100)
-                #save place
-                stem_start_indexes[word] = stem_file.tell()
-                
-                # calcul frequencies in different files
-                for doc_id in index_places_doc.keys():
-                    doc_file.seek(index_places_doc[doc_id])
-                    tfs = cPickle.Unpickler(doc_file).load()
-                    if word in tfs:
-                        files[doc_id] = tfs[word]
-                
-                # save to file   
-                pickler.dump(files)
-         
-        stem_file.close()
-        with open(r"indexes/" + self.name + self.index_places_stem, "wb") as output_file:
-            cPickle.dump(stem_start_indexes, output_file)
-            
     def inversedIndexation(self, dictionary):
         with open(r"indexes/" + self.name + self.index_places_doc) as index_places_doc_file:
             unpickler = cPickle.Unpickler(index_places_doc_file)
@@ -141,18 +120,22 @@ class Index:
 
                         iip.add_file_to_word(doc_id, tfs.keys())
                     iip.count_word_fileplaces()
+                    iip.save_places_to_file(r"indexes/" + self.index_places_stem)
                     # write inversed index full of space
                     file_total_length = iip.get_indexfile_total_length()
                     inversed_writer.seek(0)
                     inversed_writer.write(' ' * file_total_length)
                     
-                    for doc_id in index_places_doc.keys():
+                    N = len(index_places_doc.keys())
+                    print("in total " + str(N) + " documents")
+                    for doc_count,doc_id in enumerate(index_places_doc.keys()):
+                        if doc_count % 100 == 0:
+                            print(str(doc_count))
                         doc_file.seek(index_places_doc[doc_id])
                         tfs = cPickle.Unpickler(doc_file).load()
                         
-                        print(doc_id)
                         for word in tfs.keys():
-                            place, length = iip.get_place_for_word(word)
+                            place, length, next_place = iip.get_place_for_word(word)
                             
                             #standardize the length of filename
                             filename = ' ' * (4 - len(doc_id)) + doc_id
@@ -165,15 +148,18 @@ class Index:
                                 old_dico = {}
                             else:
                                 old_dico = literal_eval(old_string_value)
+           
                             
                             old_dico[filename] = format(tfs[word],'04d')
                                                       
                             # write result back
                             updated_dico = str(old_dico)
+                            
                             correct_length_updated_dico = updated_dico + ' ' * (length - len(updated_dico))
+                            
                             inversed_writer.seek(place)
                             inversed_writer.write(correct_length_updated_dico)
-
+                                            
            
     def indexation(self):
         self.dico = self.normalIndexation()
@@ -189,8 +175,23 @@ class Index:
             tfs = unpickler.load()
             return tfs
     
-    def getTfsForStem(self):
-        pass
+    def getTfsForStem(self, word):
+        with open(r"indexes/" + self.index_places_stem, 'rb') as index_places_f:
+            unpickler = cPickle.Unpickler(index_places_f)
+            index_places = unpickler.load()
+        word_start_indexes = index_places['word_start_indexes']
+        word2fileplace = index_places['word2fileplace']
+        word_lengths = index_places['word_lengths']
+        
+        idx = word2fileplace[word]
+        place = word_start_indexes[idx]
+        length = word_lengths[idx]
+        
+        with open(r"indexes/" + str(self.name) + "_inversed", "rb") as inversed_reader:
+            inversed_reader.seek(place)
+            dico_str = inversed_reader.read(length)
+        dico = literal_eval(dico_str)
+        return {int(k.strip()):int(dico[k]) for k in dico.keys()}    
     
     def getStrDoc(self, doc_id):
         self.parser = ParserCACM()

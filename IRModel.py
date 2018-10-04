@@ -23,15 +23,10 @@ class Vectoriel(IRModel):
         return s
     
     def getRanking(self, query):
+        #for d in doc:
         pass
     
     def calculeNorms(self):
-        """
-            Precalcule les norms : Je suis pas si c'est comme ca mais reponse à prochaine:
-            
-            Attention: les normes des vecteurs des documents ne doivent pas être
-            recalculées à chaque nouvelle requête.
-        """
         class_name = self.__class__.__name__.lower()
         norm_filename = self.norm_file + class_name
         

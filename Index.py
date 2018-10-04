@@ -205,3 +205,7 @@ class Index:
             #iterate
             doc = self.parser.nextDocument()
         return "No doc with id " + str(doc_id)
+    
+    def getDocIds(self):
+        with open(r"indexes/" + self.name + self.index_places_doc, "rb") as doc_file:
+            return cPickle.load(doc_file).keys()

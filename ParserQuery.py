@@ -18,7 +18,7 @@ class QueryParser():
         self.dict_queries[line[0]].add_relevant(line[1])
     self.index_ = 0'''
   def nextQuery():
-    sline[0]line[0]elf.index_ += 1
+    self.index_ += 1
     return self.dict_queries[self.index-1]
   
 class Query:

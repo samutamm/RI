@@ -11,7 +11,7 @@ class QueryParser():
         break
       print(doc.getId())
       self.dict_queries[doc.getId()] = Query(doc.getId(), doc.getText())
-      return self.dict_queries
+    return self.dict_queries
     '''with open(filename_jugements, 'rb') as f:
       for line in f:
         line = line.split(' ') 

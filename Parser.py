@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''
 Created on 6 sept. 2016
 
@@ -21,7 +22,7 @@ class Parser(object):
         
         
     def initFile(self,filename):
-        self.file=open(filename,"rb")
+        self.file=open(filename,"r")
         
         
     def __del__(self):

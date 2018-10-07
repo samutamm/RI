@@ -1,6 +1,6 @@
 from ParserCACM import ParserCACM
 from TextRepresenter import PorterStemmer
-import cPickle
+import pickle
 import numpy as np
 from ast import literal_eval
      
@@ -52,7 +52,7 @@ class InvertedIndexPlaces:
     
     def save_places_to_file(self, filename):
         with open(filename, "wb") as f:
-            pickler = cPickle.Pickler(f)
+            pickler = pickle.Pickler(f)
             pickler.dump({'word2fileplace':self.word2fileplace, 
                           'word_start_indexes':self.word_start_indexes, 
                           'word_lengths':self.word_lengths
@@ -75,7 +75,7 @@ class Index:
         stemmer = PorterStemmer()
         dictionary = set()
         f = open(r"indexes/" + str(self.name) + "_index", "wb")
-        pickler = cPickle.Pickler(f)
+        pickler = pickle.Pickler(f)
         doc_start_indexes = {}
 
         doc = self.parser.nextDocument()
@@ -99,14 +99,14 @@ class Index:
         f.close()
 
         with open(r"indexes/" + self.name + self.index_places_doc, "wb") as output_file:
-            cPickle.dump(doc_start_indexes, output_file)
+            pickle.dump(doc_start_indexes, output_file)
         with open(r"indexes/dictionary", "wb") as output_file:
-            cPickle.dump(dictionary, output_file)
+            pickle.dump(dictionary, output_file)
         return dictionary
     
     def inversedIndexation(self, dictionary):
         with open(r"indexes/" + self.name + self.index_places_doc) as index_places_doc_file:
-            unpickler = cPickle.Unpickler(index_places_doc_file)
+            unpickler = pickle.Unpickler(index_places_doc_file)
             index_places_doc = unpickler.load()
             
         iip = InvertedIndexPlaces(dictionary)
@@ -116,7 +116,7 @@ class Index:
                 with open(r"indexes/" + self.name + "_index", "rb") as doc_file:
                     for doc_id in index_places_doc.keys():
                         doc_file.seek(index_places_doc[doc_id])
-                        tfs = cPickle.Unpickler(doc_file).load()
+                        tfs = pickle.Unpickler(doc_file).load()
 
                         iip.add_file_to_word(doc_id, tfs.keys())
                     iip.count_word_fileplaces()
@@ -132,7 +132,7 @@ class Index:
                         if doc_count % 100 == 0:
                             print(str(doc_count))
                         doc_file.seek(index_places_doc[doc_id])
-                        tfs = cPickle.Unpickler(doc_file).load()
+                        tfs = pickle.Unpickler(doc_file).load()
                         
                         for word in tfs.keys():
                             place, length, next_place = iip.get_place_for_word(word)
@@ -167,17 +167,17 @@ class Index:
     
     def getTfsForDoc(self, doc_id):
         with open(r"indexes/" + self.name + self.index_places_doc) as index_places_file:
-            unpickler = cPickle.Unpickler(index_places_file)
+            unpickler = pickle.Unpickler(index_places_file)
             index_places = unpickler.load()
         with open(r"indexes/" + self.name + "_index", "rb") as f:
             f.seek(index_places[doc_id])
-            unpickler = cPickle.Unpickler(f)
+            unpickler = pickle.Unpickler(f)
             tfs = unpickler.load()
             return tfs
     
     def getTfsForStem(self, word):
         with open(r"indexes/" + self.index_places_stem, 'rb') as index_places_f:
-            unpickler = cPickle.Unpickler(index_places_f)
+            unpickler = pickle.Unpickler(index_places_f)
             index_places = unpickler.load()
         word_start_indexes = index_places['word_start_indexes']
         word2fileplace = index_places['word2fileplace']
@@ -208,4 +208,4 @@ class Index:
     
     def getDocIds(self):
         with open(r"indexes/" + self.name + self.index_places_doc, "rb") as doc_file:
-            return cPickle.load(doc_file).keys()
+            return pickle.load(doc_file).keys()

@@ -1,5 +1,5 @@
 import numpy as np
-import cPickle
+import pickle
 
 class IRModel:
     
@@ -23,7 +23,7 @@ class Vectoriel(IRModel):
         for term in query.keys():
             term_docs = self.weighter.getDocWeightsForStem(term)
             
-            term_norm = np.sqrt((np.array(term_docs.values()) ** 2).sum())
+            term_norm = np.sqrt((np.array(list(term_docs.values())) ** 2).sum())
             for doc_id in term_docs.keys():
                 doc_norm = self.docNorms[str(doc_id)]
                 if doc_id not in s:
@@ -59,26 +59,25 @@ class Vectoriel(IRModel):
         
         index_name = self.weighter.index.name
         index_places_doc_name = self.weighter.index.index_places_doc
-        with open(r"indexes/" + index_name + index_places_doc_name) as index_places_doc_file:
-            unpickler = cPickle.Unpickler(index_places_doc_file)
+        with open(r"indexes/" + index_name + index_places_doc_name, "rb") as index_places_doc_file:
+            unpickler = pickle.Unpickler(index_places_doc_file)
             index_places_doc = unpickler.load()
         
         norms = {} # doc id => norm
         with open(r"indexes/" + self.weighter.index.name + "_index", "rb") as doc_file:
             for doc_id in index_places_doc.keys():
                 doc_file.seek(index_places_doc[doc_id])
-                tfs = cPickle.Unpickler(doc_file).load()
+                tfs = pickle.Unpickler(doc_file).load()
                 
-                vector = np.array(tfs.values())
-                
+                vector = np.array(list(tfs.values()))
                 norms[doc_id] = np.sqrt((vector ** 2).sum()) # NORM CALCULS
                 
         with open(norm_filename, 'wb') as f:
-            cPickle.dump(norms, f)
+            pickle.dump(norms, f)
             
     def getDocNorms(self):
         class_name = self.__class__.__name__.lower()
         norm_filename = self.norm_file + class_name
         with open(norm_filename, 'rb') as f:
-            return cPickle.Unpickler(f).load()
+            return pickle.Unpickler(f).load()
         #return norms[str(doc_id)]

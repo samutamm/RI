@@ -10,7 +10,7 @@ class QueryParser():
     while doc:
       self.queries_[int(doc.getId())] = Query(doc.getId(), doc.getText().replace('\n', ''))
       doc = parser.nextDocument()
-    with open(filename_jugements, 'rb') as f:
+    with open(filename_jugements, 'r') as f:
       for line in f:
         line = line.split(' ') 
         self.queries_[int(line[0])].add_relevant(line[1])

@@ -2,7 +2,7 @@
 from TextRepresenter import PorterStemmer
 import sys
 
-import cPickle
+import pickle
 
     
 class Weighter:
@@ -12,7 +12,7 @@ class Weighter:
         self.index = index
         self.stemmer = PorterStemmer()
         with open(r"indexes/dictionary", "rb") as file:
-            self.terms = cPickle.load(file)
+            self.terms = pickle.load(file)
     
     def getDocWeightsForDoc(self, idDoc):
         pass

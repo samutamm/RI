@@ -80,4 +80,3 @@ class Vectoriel(IRModel):
         norm_filename = self.norm_file + class_name
         with open(norm_filename, 'rb') as f:
             return pickle.Unpickler(f).load()
-        #return norms[str(doc_id)]

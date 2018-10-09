@@ -187,6 +187,8 @@ class Index:
         word2fileplace = index_places['word2fileplace']
         word_lengths = index_places['word_lengths']
         
+        if word not in word2fileplace:
+            return {}
         idx = word2fileplace[word]
         place = word_start_indexes[idx]
         length = word_lengths[idx]

@@ -14,33 +14,48 @@ class EvalMeasure:
     def eval(self, ir_list):
         pass
     
-class PrecisionRappelEval(EvalMeasure):
-    
-    def eval(self, ir_list, nbLevels=3):      
+    def calcule_stats(self, ir_list):
+        """
+            Returns pandas.DataFrame table that contains columns :
+            -rank : 
+            -pertinent : boolean, if list element is relevant
+        """
         relevants = ir_list.query.relevants_
         relevants_N = len(relevants)
-        rank = np.array(ir_list.document_rank)[:, 0]
-        rank = np.vectorize(remove_b)(rank)
+        doc_id = np.array(ir_list.document_rank)[:, 0]
+        doc_id = np.vectorize(remove_b)(doc_id)
         
-        pertinent = [(r in relevants) for r in rank]
+        pertinent = [(r in relevants) for r in doc_id]
         # l'air le méme que exemple dans le slide 109
-        table = pd.DataFrame({'rank':rank, 'pertinent':pertinent})
-        print(table)
+        table = pd.DataFrame({'doc_id':doc_id, 'pertinent':pertinent})
         # slide 108 & 115
-        k_parametres = np.linspace(0,1,nbLevels)
-        
         table['true_positive'] = table.pertinent.cumsum()
         growing_index = pd.Series(np.arange(1, table.shape[0] + 1)) # 1,2,..n
         table['precision'] = table['true_positive'] / growing_index
         table['rappel'] = table['true_positive'] / relevants_N
+        return table, relevants_N
+    
+class PrecisionRecallEval(EvalMeasure):
+    
+    def eval(self, ir_list, nbLevels=3):      
+        table,_ = self.calcule_stats(ir_list) # call parent
         
+        k_parametres = np.linspace(0,1,nbLevels)
         interpolated_precisions = []
         for k in k_parametres:
             idx = table.rappel >= k
             max_prec = table.precision[idx].max()
             interpolated_precisions.append(max_prec)
         return interpolated_precisions, k_parametres
-                    
+
+class PrecisionMeanEval(EvalMeasure):
+    
+    def eval(self, ir_list):
+        table, relevants_N = self.calcule_stats(ir_list) # call parent
+        filtered_table = table[table.pertinent == True]
+        return filtered_table.precision.sum() / relevants_N
+        
+    
 class IRList:
     
     def __init__(self, query, document_rank):

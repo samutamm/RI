@@ -5,8 +5,7 @@ class IRModel:
     
     def __init__(self, weighter):
         self.weighter = weighter
-        self.norm_file = "indexes/document_norm_" # TODO move to weighter
-        self.docNorms = self.getDocNorms() 
+        self.docNorms = weighter.getDocNorms() 
     
     def getScores(self, query):
         pass
@@ -51,32 +50,3 @@ class Vectoriel(IRModel):
         rank = scores_ranked
         return [[str(rank[i][0]), float(rank[i][1])] for i in range(len(rank))]
             
-    # TODO move to weighter! ca depend du weighter
-    def calculeNorms(self):
-        class_name = self.__class__.__name__.lower()
-        norm_filename = self.norm_file + class_name
-        
-        
-        index_name = self.weighter.index.name
-        index_places_doc_name = self.weighter.index.index_places_doc
-        with open(r"indexes/" + index_name + index_places_doc_name, "rb") as index_places_doc_file:
-            unpickler = pickle.Unpickler(index_places_doc_file)
-            index_places_doc = unpickler.load()
-        
-        norms = {} # doc id => norm
-        with open(r"indexes/" + self.weighter.index.name + "_index", "rb") as doc_file:
-            for doc_id in index_places_doc.keys():
-                doc_file.seek(index_places_doc[doc_id])
-                tfs = pickle.Unpickler(doc_file).load()
-                
-                vector = np.array(list(tfs.values()))
-                norms[doc_id] = np.sqrt((vector ** 2).sum()) # NORM CALCULS
-                
-        with open(norm_filename, 'wb') as f:
-            pickle.dump(norms, f)
-            
-    def getDocNorms(self):
-        class_name = self.__class__.__name__.lower()
-        norm_filename = self.norm_file + class_name
-        with open(norm_filename, 'rb') as f:
-            return pickle.Unpickler(f).load()

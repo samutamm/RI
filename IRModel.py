@@ -69,7 +69,7 @@ class LanguageModel(IRModel):
     def __init__(self, weighter):
       super().__init__(weighter)
       self.l_docs_ = {idx:sum(self.weighter.getDocWeightsForDoc(idx).values()) for idx in self.weighter.index.keys()}    
-    def getScores(self, query, lambda=1):
+    def getScores(self, query, lambd=1):
         s = {} 
         tw4q = self.weighter.getWeightsForQuery(query)
         for t in query:
@@ -77,8 +77,8 @@ class LanguageModel(IRModel):
           tf_t_c = sum(dw4t.values())
           l_c = sum(self.l_docs_.values())
           for d in dw4t:
-            s['d'] += tw4q[t] * dw4t[d] / self.l_docs_[d]
-           
+            s['d'] += tw4q[t] * np.log( lambd*(dw4t[d]/self.l_docs_[d]) + (1-lambd)*(tf_t_c/l_c) )
+        return s 
     def getRanking(self, query):
         pass
 

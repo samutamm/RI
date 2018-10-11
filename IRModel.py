@@ -50,3 +50,37 @@ class Vectoriel(IRModel):
         rank = scores_ranked
         return [[str(rank[i][0]), float(rank[i][1])] for i in range(len(rank))]
             
+# Modele de langue probabiliste, utilisant l'index inversé
+# jamais de boucle sur l'ensemble des docs :
+#for i in docs
+  #for …
+# mais faire
+#for t in query
+  #…
+# term frequency n'est pas réellement une fréquence, mais c'était le terme utilisé dans les premiers papiers.
+# attention les scores sont négatifs.
+# [] pénalité globable
+# for t in query
+#  l = getdocweightsforstem(t) 
+#  for d in l:
+#   st = w
+# L(d) somme des tf
+class LanguageModel(IRModel):
+    def __init__(self, weighter):
+      super().__init__(weighter)
+      self.l_docs_ = {idx:sum(self.weighter.getDocWeightsForDoc(idx).values()) for idx in self.weighter.index.keys()}    
+    def getScores(self, query, lambda=1):
+        s = {} 
+        tw4q = self.weighter.getWeightsForQuery(query)
+        for t in query:
+          dw4t = self.weighter.getDocWeightsForStem()
+          tf_t_c = sum(dw4t.values())
+          l_c = sum(self.l_docs_.values())
+          for d in dw4t:
+            s['d'] += tw4q[t] * dw4t[d] / self.l_docs_[d]
+           
+    def getRanking(self, query):
+        pass
+
+
+# BM25 vectoriel

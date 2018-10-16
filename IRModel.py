@@ -5,7 +5,7 @@ class IRModel:
     
     def __init__(self, weighter):
         self.weighter = weighter
-        self.docNorms = weighter.getDocNorms() 
+        self.docNorms = weighter.getDocNorms()
     
     def getScores(self, query):
         pass
@@ -84,3 +84,34 @@ class LanguageModel(IRModel):
 
 
 # BM25 vectoriel
+
+def idf_prime(term, df_term, N):
+    dft = len(df_term)
+    idf = np.log((N - dft + 0.5) / (dft + 0.5))
+    return np.max([0, idf])
+
+class BM25Model(IRModel):
+    
+    def __init__(self, weighter):
+        super().__init__(weighter)
+        self.N = len(weighter.index.getDocIds())
+        
+    def getScores(self, query, k1=1, b=0.75):
+        #assert k >= 1 and k <= 2
+        L_mean = self.weighter.doc_mean_length
+        scores = {}
+        tw4q = self.weighter.getWeightsForQuery(query)
+        for stem in query:
+            print(stem)
+            dw41 = self.weighter.getDocWeightsForStem(stem)
+            idf = idf_prime(stem, dw41, self.N)
+            for doc_id in dw41.keys():
+                L = len(self.weighter.index.getTfsForDoc(doc_id))# doc lengths
+                tf_td = dw41[doc_id]
+                nominator = (k1 + 1) * tf_td
+                denominator = k1 * ((1 - b) + b*L / L_mean) + tf_td
+                if doc_id not in scores:
+                    scores[doc_id] = 0
+                scores[doc_id] += idf * (nominator / denominator)
+        print(scores)
+        return scores

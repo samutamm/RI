@@ -14,6 +14,9 @@ class Weighter:
         with open(r"indexes/dictionary", "rb") as file:
             self.terms = pickle.load(file)
         self.norm_file = "indexes/document_norm_" + self.__class__.__name__
+        self.doc_mean_length = np.array(
+            [len(index.getTfsForDoc(doc_id)) for doc_id in index.getDocIds()]
+        ).mean()
     
     def getDocWeightsForDoc(self, idDoc):
         pass

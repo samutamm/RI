@@ -44,7 +44,7 @@ class Vectoriel(IRModel):
         # let's add all documents that does not contain query words
         all_doc_ids = self.weighter.index.getDocIds()
         for doc_id in all_doc_ids:
-            if doc_id not in scores:
+            if int(doc_id) not in scores.keys():
                 scores_ranked.append([str(doc_id), 0])
                 
         rank = scores_ranked

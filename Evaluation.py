@@ -21,18 +21,27 @@ class EvalMeasure:
             -pertinent : boolean, if list element is relevant
         """
         relevants = ir_list.query.relevants_
+        relevants = np.array(relevants, dtype=int)
         relevants_N = len(relevants)
-        doc_id = np.array(ir_list.document_rank)[:, 0]
-        doc_id = np.vectorize(remove_b)(doc_id)
         
-        pertinent = [(r in relevants) for r in doc_id]
+        document_rank = np.array(ir_list.document_rank)
+        doc_id = document_rank[:, 0]
+        doc_id = np.vectorize(remove_b)(doc_id)
+        scores = document_rank[:,1]
+        
         # l'air le méme que exemple dans le slide 109
-        table = pd.DataFrame({'doc_id':doc_id, 'pertinent':pertinent})
+        table = pd.DataFrame({'doc_id':doc_id.astype(int),
+                              'score':pd.Series(scores).astype(float)})
+        
+        table['pertinent'] = table.doc_id.isin(relevants)
+        #table['pertinent_retrieved'] = np.logical_and(table.pertinent, table.score > 0)
+        
         # slide 108 & 115
         table['true_positive'] = table.pertinent.cumsum()
         growing_index = pd.Series(np.arange(1, table.shape[0] + 1)) # 1,2,..n
         table['precision'] = table['true_positive'] / growing_index
         table['rappel'] = table['true_positive'] / relevants_N
+        
         return table, relevants_N
     
 class PrecisionRecallEval(EvalMeasure):

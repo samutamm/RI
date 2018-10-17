@@ -13,6 +13,20 @@ class IRModel:
     def getRanking(self, query):
         pass
     
+    def _count_ranking(self, scores):
+        scores_unranked = np.array([(str(key),float(scores[key])) for key in scores.keys()], 
+                                   dtype=(np.character,np.float))
+        scores_ranked = scores_unranked[scores_unranked[:,1].argsort()[::-1]].tolist()
+        
+        # let's add all documents that does not contain query words
+        all_doc_ids = self.weighter.index.getDocIds()
+        for doc_id in all_doc_ids:
+            if int(doc_id) not in scores.keys():
+                scores_ranked.append([str(doc_id), 0])
+                
+        rank = scores_ranked
+        return [[str(rank[i][0]), float(rank[i][1])] for i in range(len(rank))]
+    
 class Vectoriel(IRModel):
     
     def getScores(self, query, normalized=False):
@@ -32,23 +46,12 @@ class Vectoriel(IRModel):
         
         return s
     
-    def getRanking(self, query, normalized=False):
+    def getRanking(self, query, normalized=True):
         stemmer = self.weighter.stemmer
         query_vector = stemmer.getTextRepresentation(query)
         scores = self.getScores(query_vector, normalized=normalized)
+        return self._count_ranking(scores)
         
-        scores_unranked = np.array([(str(key),float(scores[key])) for key in scores.keys()], 
-                                   dtype=(np.character,np.float))
-        scores_ranked = scores_unranked[scores_unranked[:,1].argsort()[::-1]].tolist()
-        
-        # let's add all documents that does not contain query words
-        all_doc_ids = self.weighter.index.getDocIds()
-        for doc_id in all_doc_ids:
-            if int(doc_id) not in scores.keys():
-                scores_ranked.append([str(doc_id), 0])
-                
-        rank = scores_ranked
-        return [[str(rank[i][0]), float(rank[i][1])] for i in range(len(rank))]
             
 # Modele de langue probabiliste, utilisant l'index inversé
 # jamais de boucle sur l'ensemble des docs :
@@ -97,21 +100,26 @@ class BM25Model(IRModel):
         self.N = len(weighter.index.getDocIds())
         
     def getScores(self, query, k1=1, b=0.75):
-        #assert k >= 1 and k <= 2
         L_mean = self.weighter.doc_mean_length
         scores = {}
         tw4q = self.weighter.getWeightsForQuery(query)
-        for stem in query:
-            print(stem)
+        for stem in query.keys():
             dw41 = self.weighter.getDocWeightsForStem(stem)
             idf = idf_prime(stem, dw41, self.N)
             for doc_id in dw41.keys():
-                L = len(self.weighter.index.getTfsForDoc(doc_id))# doc lengths
+                L = len(self.weighter.index.getTfsForDoc(str(doc_id)))# doc lengths : optimisation --> precalcul
                 tf_td = dw41[doc_id]
                 nominator = (k1 + 1) * tf_td
                 denominator = k1 * ((1 - b) + b*L / L_mean) + tf_td
                 if doc_id not in scores:
                     scores[doc_id] = 0
                 scores[doc_id] += idf * (nominator / denominator)
-        print(scores)
+        #print(scores)
         return scores
+    
+    def getRanking(self, query):
+        stemmer = self.weighter.stemmer
+        query_vector = stemmer.getTextRepresentation(query)
+        scores = self.getScores(query_vector) #  k1=1, b=0.75
+        ranking = self._count_ranking(scores)
+        return ranking

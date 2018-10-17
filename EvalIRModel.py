@@ -18,7 +18,7 @@ class EvalIRModel:
         precision_means = []
         query = self.query_parser.nextQuery()
         while query:
-            rank = model.getRanking(query.text_, normalized=True)
+            rank = model.getRanking(query.text_)
             irlist = IRList(query, rank)
             
             #precision_recalls.append(self.precision_recall.eval(irlist)) # TODO fix nulls before

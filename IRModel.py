@@ -117,7 +117,6 @@ class BM25Model(IRModel):
             dw41 = self.weighter.getDocWeightsForStem(stem)
             idf = idf_prime(stem, dw41, self.N)
             for doc_id in dw41.keys():
-                #L = len(self.weighter.index.getTfsForDoc(str(doc_id)))# doc lengths : optimisation --> precalcul
                 tf_td = dw41[doc_id]
                 nominator = (k1 + 1) * tf_td
                 denominator = k1 * ((1 - b) + b*self.L[doc_id] / L_mean) + tf_td

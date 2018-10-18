@@ -21,13 +21,20 @@ class EvalIRModel:
             rank = model.getRanking(query.text_)
             irlist = IRList(query, rank)
             
-            #precision_recalls.append(self.precision_recall.eval(irlist)) # TODO fix nulls before
+            x, y = self.precision_recall.eval(irlist)
+            precision_recalls.append(y) # TODO fix nulls before
             precision_means.append(self.precision_mean.eval(irlist))
             
             query = self.query_parser.nextQuery()
-
+        
+        precision_recalls = np.array(precision_recalls).mean(axis=0)
         precision_means = np.array(precision_means)
-        return precision_means.mean(), precision_means.std()
+        output = {
+            'precision_recall':precision_recalls,
+            'precision_mean':precision_means.mean(),
+            'precision_mean_std':precision_means.std()
+        }
+        return output
        
 
         

@@ -46,7 +46,7 @@ class EvalMeasure:
     
 class PrecisionRecallEval(EvalMeasure):
     
-    def eval(self, ir_list, nbLevels=3):      
+    def eval(self, ir_list, nbLevels=10):      
         table,_ = self.calcule_stats(ir_list) # call parent
         
         k_parametres = np.linspace(0,1,nbLevels)
@@ -55,7 +55,7 @@ class PrecisionRecallEval(EvalMeasure):
             idx = table.rappel >= k
             max_prec = table.precision[idx].max()
             interpolated_precisions.append(max_prec)
-        return interpolated_precisions, k_parametres
+        return k_parametres, interpolated_precisions
 
 class PrecisionMeanEval(EvalMeasure):
     

@@ -77,21 +77,23 @@ class LanguageModel(IRModel):
         scores = {} 
         tw4q = self.weighter.getWeightsForQuery(query)
         l_c = sum(self.l_docs_.values())
+        score_absents = 0
         for stem in query.keys():
             dw4s = self.weighter.getDocWeightsForStem(stem)
             tf_t_c = sum(dw4s.values())
-            print("Modèle sur corpus :", tf_t_c/l_c)
+            score_absents += tw4q[stem] * np.log((1-lambd)*(tf_t_c/l_c))
             for d in dw4s.keys():
                 #print(dw4s[d]/self.l_docs_[d])
                 if d not in scores:
                     scores[d] = 0
                 scores[d] += tw4q[stem] * np.log( lambd*(dw4s[d]/self.l_docs_[d]) + (1-lambd)*(tf_t_c/l_c) )
-        return scores
+        print("Score minimal :", score_absents)
+        return scores, score_absents
     def getRanking(self, query, lambd=1):
         stemmer = self.weighter.stemmer
         query_vector = stemmer.getTextRepresentation(query)
-        scores = self.getScores(query_vector, lambd=lambd)
-        ranking = self._count_ranking(scores, minimum=-999)
+        scores, score_absents = self.getScores(query_vector, lambd=lambd)
+        ranking = self._count_ranking(scores, minimum=score_absents)
         return ranking
 
 

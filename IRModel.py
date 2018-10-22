@@ -87,7 +87,7 @@ class LanguageModel(IRModel):
                 if d not in scores:
                     scores[d] = 0
                 scores[d] += tw4q[stem] * np.log( lambd*(dw4s[d]/self.l_docs_[d]) + (1-lambd)*(tf_t_c/l_c) )
-        print("Score minimal :", score_absents)
+        #print("Score minimal :", score_absents)
         return scores, score_absents
     def getRanking(self, query, lambd=1):
         stemmer = self.weighter.stemmer
@@ -128,9 +128,9 @@ class BM25Model(IRModel):
         #print(scores)
         return scores
     
-    def getRanking(self, query):
+    def getRanking(self, query, k1=1, b=0.75):
         stemmer = self.weighter.stemmer
         query_vector = stemmer.getTextRepresentation(query)
-        scores = self.getScores(query_vector) #  k1=1, b=0.75
+        scores = self.getScores(query_vector, k1=k1, b=b) #  k1=1, b=0.75
         ranking = self._count_ranking(scores)
         return ranking

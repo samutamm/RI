@@ -8,17 +8,22 @@ class EvalIRModel:
     def __init__(self, 
                  filename_queries="cacm/cacm.qry", 
                  filename_jugements="cacm/cacm.rel"):
-        self.query_parser = QueryParser()
-        self.query_parser.initFile(filename_queries, filename_jugements)
+        self.filename_queries = filename_queries
+        self.filename_jugements = filename_jugements
         self.precision_recall = PrecisionRecallEval()
         self.precision_mean = PrecisionMeanEval()
+        
+    def initParser(self):
+        self.query_parser = QueryParser()
+        self.query_parser.initFile(self.filename_queries, self.filename_jugements)
     
-    def evalModel(self, model):
+    def evalModel(self, model, ranking_call = lambda m, text: m.getRanking(text)):
+        self.initParser()
         precision_recalls = []
         precision_means = []
         query = self.query_parser.nextQuery()
         while query:
-            rank = model.getRanking(query.text_)
+            rank = ranking_call(model, query.text_)#model.getRanking(query.text_)
             irlist = IRList(query, rank)
             
             x, y = self.precision_recall.eval(irlist)

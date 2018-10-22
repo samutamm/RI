@@ -29,9 +29,10 @@ class EvalMeasure:
         doc_id = np.vectorize(remove_b)(doc_id)
         scores = document_rank[:,1]
         
+        doc_id_column = pd.to_numeric(doc_id, errors='coerce').astype(np.int64)
+        score_column = pd.to_numeric(scores, errors='coerce').astype(np.float64)
         # l'air le méme que exemple dans le slide 109
-        table = pd.DataFrame({'doc_id':doc_id.astype(int),
-                              'score':pd.Series(scores).astype(float)})
+        table = pd.DataFrame({'doc_id':doc_id_column, 'score':score_column})
         
         table['pertinent'] = table.doc_id.isin(relevants)
         #table['pertinent_retrieved'] = np.logical_and(table.pertinent, table.score > 0)

@@ -1,4 +1,5 @@
 import random
+import numpy as np
 
 def create_dico_graph(index):
     graph = {}
@@ -39,4 +40,39 @@ class PageRank(RandomWalk):
 
     def update_mus(self, courant):
         pass
+
+#A = csc_matrix(G,dtype=np.float)
+class PageRank2(RandomWalk):
+
+    def __init__(self, graph):
+        '''
+            Prendre une matrice sparse comme entrees
+        '''
+        self.graph = graph
+
+    def compute_mus(self, n_iter, d = .85):
+        n = self.graph.shape[0]
+
+        A = self.graph
+        rsums = np.array(A.sum(1))[:, 0]
+        ri, ci = A.nonzero()
+        A.data /= rsums[ri]
+
+        sink = rsums == 0
+
+        ro, r = np.zeros(n), np.ones(n)
+
+        for _ in range(n_iter): # TODO replace with converge criterion
+            ro = r.copy()
+
+            for i in range(n):
+                Ai = np.array(A[:, i].todense())[:, 0]
+
+                Di = sink / float(n)
+
+                Ei = np.ones(n) / float(n)
+
+                r[i] = ro.dot(Ai * d + Di * d + Ei * (1 - d))
+
+        return r / float(sum(r))
 

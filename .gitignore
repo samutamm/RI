@@ -7,3 +7,4 @@
 *.qry
 indexes
 *__pycache__
+.idea/

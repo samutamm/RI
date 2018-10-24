@@ -75,9 +75,7 @@ class Index:
         
         stemmer = PorterStemmer()
         dictionary = set()
-        #f = open(r"indexes/" + str(self.name) + "_index", "w") # ASCII as STR mode
-        f = open(r"indexes/" + str(self.name) + "_index", "wb") # ASCII as BYTES mode 
-        #pickler = pickle.Pickler(f, protocol=0) # protocol 0 : saves in plain ASCII txt
+        f = open(r"indexes/" + str(self.name) + "_index", "wb") # ASCII as BYTES mode
         doc_start_indexes = {}
 
         doc = self.parser.nextDocument()
@@ -85,14 +83,21 @@ class Index:
             text = doc.getText()
             doc_id = doc.getId()
 
+            link_string = doc.get("links")
+            if len(link_string) == 0:
+                links = []
+            else:
+                link_string = link_string[:-1] if link_string[-1] == ';' else link_string
+                links = link_string.split(';')
+
             #save place
             doc_start_indexes[doc_id] = f.tell()
 
             #save to file
             stems = stemmer.getTextRepresentation(text)
-            #pickled = pickle.dumps(stems, protocol=0).decode() # dumps : return ASCII as BYTES # decode : binary -> str
-            #f.write(pickled)
-            pickle.dump(stems, f, protocol=-1) # -1 = HIGHEST_PROTOCOL (binary)
+            index_element = {'stems':stems, 'links':links}
+
+            pickle.dump(index_element, f, protocol=-1) # -1 = HIGHEST_PROTOCOL (binary)
             # dictionary can fit to memory
             dictionary.update(stems.keys())
             
@@ -119,8 +124,7 @@ class Index:
                 with open(r"indexes/" + self.name + "_index", "rb") as doc_file:
                     for doc_id in index_places_doc.keys():
                         doc_file.seek(index_places_doc[doc_id])
-                        tfs = pickle.load(doc_file)
-                        #tfs = pickle.Unpickler(doc_file).load()
+                        tfs = pickle.load(doc_file)['stems']
 
                         iip.add_file_to_word(doc_id, tfs.keys())
                     iip.count_word_fileplaces()
@@ -136,7 +140,7 @@ class Index:
                         if doc_count % 100 == 0:
                             print(str(doc_count))
                         doc_file.seek(index_places_doc[doc_id])
-                        tfs = pickle.Unpickler(doc_file).load()
+                        tfs = pickle.Unpickler(doc_file).load()['stems']
                         
                         for word in tfs.keys():
                             place, length, next_place = iip.get_place_for_word(word)
@@ -168,8 +172,8 @@ class Index:
     def indexation(self):
         self.dico = self.normalIndexation()
         self.inversedIndexation(self.dico)
-    
-    def getTfsForDoc(self, doc_id):
+
+    def _readDocIndex(self, doc_id):
         with open(r"indexes/" + self.name + self.index_places_doc, 'rb') as index_places_file:
             unpickler = pickle.Unpickler(index_places_file)
             index_places = unpickler.load()
@@ -178,6 +182,12 @@ class Index:
             unpickler = pickle.Unpickler(f)
             tfs = unpickler.load()
             return tfs
+
+    def getTfsForDoc(self, doc_id):
+        return self._readDocIndex(doc_id)['stems']
+
+    def getLinksForDoc(self, doc_id):
+        return self._readDocIndex(doc_id)['links']
     
     def getTfsForStem(self, word):
         with open(r"indexes/" + self.index_places_stem, 'rb') as index_places_f:

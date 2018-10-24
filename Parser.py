@@ -19,7 +19,7 @@ class Parser(object):
         self.begin=begin
         self.end=end
         self.file=None
-        
+        self.null_byte = "\x00"
         
     def initFile(self,filename):
         self.file=open(filename,"r")
@@ -45,7 +45,7 @@ class Parser(object):
             while(True):
                 curOff=self.file.tell();
                
-                ligne=self.file.readline();
+                ligne=self.file.readline().replace(self.null_byte, '')
                 #self.file.seek(curOff,0)
                 #print ligne
                

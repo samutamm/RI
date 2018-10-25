@@ -221,6 +221,52 @@ class Index:
             #iterate
             doc = self.parser.nextDocument()
         return "No doc with id " + str(doc_id)
+
+    def getDocFeatures(self):
+        """
+        :return: id, text length, stem count, idf sum
+        """
+
+        lengths = []
+        stemmer = PorterStemmer()
+        parser = ParserCACM()
+        parser.initFile(self.filename)
+        dictonnary = set()
+        doc = parser.nextDocument()
+
+        while (doc):
+            text = doc.getText()
+            doc_id = doc.getId()
+            stems = stemmer.getTextRepresentation(text)
+
+            dictonnary.update(stems.values())
+            lengths.append((int(doc_id), len(text), len(stems.keys())))
+
+            doc = parser.nextDocument()
+
+        parser.initFile(self.filename)
+        N = len(lengths)
+        idf = {}
+
+        for w in list(dictonnary):
+            count = len(self.getTfsForStem(w).keys()) + 1
+            idf_i =  np.log(N / count)
+            idf[w] = idf_i
+
+        idfs_by_doc = []
+        doc = parser.nextDocument()
+        while (doc):
+            text = doc.getText()
+            stems = stemmer.getTextRepresentation(text)
+
+            doc_idfs = [idf[w] for w in stems.values()]
+            idfs_by_doc.append(sum(doc_idfs))
+
+            doc = parser.nextDocument()
+
+
+        return np.concatenate((np.array(lengths), np.array(idfs_by_doc).reshape(-1, 1)), axis=1)
+
     
     def getDocIds(self):
         with open(r"indexes/" + self.name + self.index_places_doc, "rb") as doc_file:

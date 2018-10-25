@@ -1,5 +1,6 @@
 import random
 import numpy as np
+from scipy.sparse import csc_matrix
 
 def create_dico_graph(index):
     graph = {}
@@ -11,9 +12,52 @@ def create_dico_graph(index):
             import pdb; pdb.set_trace()
     return graph
 
+def whole_graph(index):
+    ''' Arguments:
+        index
+        Returns:
+        graph: the graph as a sparse matrix of outgoing links
+    '''
+    I = []
+    J = []
+    doc_ids = index.getDocIds()
+    for i in doc_ids:
+        for j in index.getLinksForDoc(i):
+            I.append(int(i)) # link sortant 
+            J.append(int(j)) # link entrant
+    I = np.array(I)
+    J = np.array(J)
+    V = np.ones(I.shape[0])
+    n = I.max() + 1
+    m = n
+    graph = csc_matrix((V,(I,J)), shape=(n,m))
+    return graph
+
+def sub_graph(graph, seeds, number_of_backlinks):
+    ''' Arguments:
+        graph : global sparse matrix of outgoing links
+        seeds : list or set S
+        number_of_backlinks : k
+        Returns:
+        sub_graph: the graph as a sparse matrix of outgoing links
+        V
+    '''
+    #V = seeds.copy()
+    V = set(seeds)
+    for doc in seeds:
+        #V.extend(seeds[doc, :].nonzero()[1])
+        #V.extend(random.sample(list(seeds[:, doc].nonzero()[0]), number_of_backlinks))
+        V.update(graph[doc, :].nonzero()[1])
+        backlinks = list(graph[:, doc].nonzero()[0])
+        V.update(random.sample(backlinks, min(number_of_backlinks, len(backlinks))))
+    V = list(V)
+    sub_graph = graph[V, :][:, V]
+    return sub_graph, V
+
+
 class RandomWalk:
     def __init__(self, graphe):
-        ''' le graphe donnée en paramètre est un dictionnaire avec pour clés les id des documents,
+        ''' le graphe donné en paramètre est un dictionnaire avec pour clés les id des documents,
             pour valeur une liste contenant les id des documents vers lesquels pointent les liens contenus dans le document-clé
             et une liste contenant les id des documents qui possèdent des liens pointant vers le document-clé
         '''
@@ -46,7 +90,7 @@ class PageRank2(RandomWalk):
 
     def __init__(self, graph):
         '''
-            Prendre une matrice sparse comme entrees
+            Prend une matrice sparse en entrée
         '''
         self.graph = graph
 

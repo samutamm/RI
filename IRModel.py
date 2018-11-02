@@ -144,16 +144,20 @@ class MetaModel(IRModel):
         self.featurers_list = featurers_list
     
 class LinearMetaModel(MetaModel):
-    def __init__(self, featurers_list):
+    def __init__(self,
+                 featurers_list,
+                 filename_queries="cacm/cacm.qry",
+                 filename_jugements="cacm/cacm.rel"):
         super().__init__(featurers_list)
         _, example_features = featurers_list.getFeatures(1,"test")
         self.thetas = np.random.randn(len(example_features))
+        self.filename_queries = filename_queries
+        self.filename_jugements = filename_jugements
 
-    def train(self, max_iter, epsilon, lambda_,
-    filename_queries="cacm/cacm.qry", 
-    filename_jugements="cacm/cacm.rel"):
+
+    def train(self, max_iter, epsilon, lambda_):
         query_parser = RandomQueryParser()        
-        query_parser.initFile(filename_queries, filename_jugements)
+        query_parser.initFile(self.filename_queries, self.filename_jugements)
         query_parser.train_test_split(0.8)
         # train
         for i in range(max_iter):
@@ -180,19 +184,35 @@ class LinearMetaModel(MetaModel):
         :param plain text query:
         :return: pd.Series of scores indexed by doc_id. Access by .loc[int_id]
         """
+        query_parser = QueryParser()
+        query_parser.initFile(self.filename_queries, self.filename_jugements)
+        query_minmax = query_parser.get_query_min_max(self.featurers_list.index)
+
         feature_scores = []
         doc_ids = self.featurers_list.index.getDocIds()
+        keys = None
         for doc_id in doc_ids:
-            _,features = self.featurers_list.getFeatures(int(doc_id),query)
+            keys, features = self.featurers_list.getFeatures(int(doc_id),query)
             feature_scores.append(features)
 
         feature_scores = np.array(feature_scores)
+        feature_scores = pd.DataFrame(feature_scores, columns=keys)
         # NORMALIZATION
         normalized_scores = []
-        for column in feature_scores.T:
-            denominator = column.max() - column.min()
-            denominator = 1 if denominator == 0 else denominator
-            normalized = (column - column.min()) / denominator
+        for column_name in feature_scores:
+            column = feature_scores[column_name]
+            min = column.min()
+            max = column.max()
+            if column.name == 'query_idf':
+                min = query_minmax['query_idf_min']
+                max = query_minmax['query_idf_max']
+            if column.name == 'query_char_count':
+                min = query_minmax['query_len_min']
+                max = query_minmax['query_len_max']
+            if min == max:
+                print("Columns {} min and max are equal {}".format(column_name, min))
+                continue
+            normalized = (column - min) / (max - min)
             normalized_scores.append(normalized)
 
         normalized_scores = np.array(normalized_scores).T

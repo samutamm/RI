@@ -58,7 +58,8 @@ class RandomQueryParser(QueryParser):
         index = int(len(self.query_keys_)*propTrain)
         self.query_keys_train_ = self.query_keys_[:index]
         self.query_keys = self.query_keys_[index:]
-    def nextRandomTrainQuery()
+    
+    def nextRandomTrainQuery():
         i = random.choice(self.query_keys_train_) 
         return self.queries_[self.query_keys_[i]]
 

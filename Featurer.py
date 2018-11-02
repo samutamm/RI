@@ -83,9 +83,10 @@ class Featurer:
                 doc_index, rank = ranking_array.T # split columns
                 df = pd.DataFrame({'ranking': rank}, index=doc_index)
                 rankings[model_name] = df
+            self.ranking_feature_cache[query] = rankings
 
         query_rankings = self.ranking_feature_cache[query]
-        return {model_name:query_rankings[model_name].loc[doc_id] for model_name in query_rankings.keys()}
+        return {model_name:query_rankings[model_name].loc[doc_id].values for model_name in query_rankings.keys()}
 
 
 

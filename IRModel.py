@@ -3,7 +3,7 @@ import pdb
 import numpy as np
 import pandas as pd
 import pickle
-from random import choice
+import random
 
 from ParserQuery import QueryParser, RandomQueryParser
 
@@ -154,21 +154,26 @@ class LinearMetaModel(MetaModel):
     filename_jugements="cacm/cacm.rel"):
         query_parser = RandomQueryParser()        
         query_parser.initFile(filename_queries, filename_jugements)
+        query_parser.train_test_split(0.8)
         # train
         for i in range(max_iter):
-            q = query_parser.nextRandomTrainQuery()
-            docs = np.array(self.featurers_list.index.getDocIds()).astype(int)
-            pdb.set_trace()
-            irrelevants = docs[~np.array(q.relevants_).astype(int)]
-            d = choice(q.relevants_)
-            dp = choice(irrelevants)
+            query = query_parser.next_random_train_query()
+            docs = np.array(list(self.featurers_list.index.getDocIds())).astype(int)
+            relevants = np.array(query.relevants_).astype(int) 
+            irrelevants = docs[~np.isin(docs, relevants)]
+            d = random.choice(relevants)
+            dp = random.choice(irrelevants)
              
-            scores = self.getScores(q)
+            scores = self.getScores(query.text_)
+            _, scores_d = self.featurers_list.getFeatures(d, query.text_)
+            _, scores_dp = self.featurers_list.getFeatures(dp, query.text_)
+            scores_d = np.array(scores_d)
+            scores_dp = np.array(scores_dp)
             score_d = scores.get(int(d))
             score_dp = scores.get(int(dp))
             if 1 - score_d + score_dp > 0:
-                self.theta += epsilon*(score_d - scores_dp)
-                self.theta = (1 - 2*epsilon*lambda_)*self.theta
+                self.thetas += epsilon*(scores_d - scores_dp)
+                self.thetas = (1 - 2*epsilon*lambda_)*self.thetas
 
     def getScores(self, query):
         """

@@ -162,4 +162,6 @@ class LinearMetaModel(MetaModel):
         return normalized_scores.dot(self.thetas)
     
     def getRanking(self, query):
-        pass
+        scores = self.getScores(query)
+        ranking = self._count_ranking(scores)
+        return ranking

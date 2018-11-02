@@ -149,10 +149,11 @@ class LinearMetaModel(MetaModel):
                  filename_queries="cacm/cacm.qry",
                  filename_jugements="cacm/cacm.rel"):
         super().__init__(featurers_list)
-        _, example_features = featurers_list.get_features(1, "test")
+        keys, example_features = featurers_list.get_features(1, "test")
         self.thetas = np.random.randn(len(example_features))
         self.filename_queries = filename_queries
         self.filename_jugements = filename_jugements
+        self.attribute_names = keys
 
 
     def train(self, max_iter, epsilon, lambda_):
@@ -169,8 +170,8 @@ class LinearMetaModel(MetaModel):
             dp = random.choice(irrelevants)
              
             scores = self.getScores(query.text_)
-            _, scores_d = self.featurers_list.getFeatures(d, query.text_)
-            _, scores_dp = self.featurers_list.getFeatures(dp, query.text_)
+            _, scores_d = self.featurers_list.get_features(d, query.text_)
+            _, scores_dp = self.featurers_list.get_features(dp, query.text_)
             scores_d = np.array(scores_d)
             scores_dp = np.array(scores_dp)
             score_d = scores.get(int(d))

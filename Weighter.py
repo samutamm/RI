@@ -64,7 +64,7 @@ class WeighterVector(Weighter):
         with open(r"indexes/" + index_name + "_index", "rb") as doc_file:
             for doc_id in index_places_doc.keys():
                 doc_file.seek(index_places_doc[doc_id])
-                tfs = pickle.Unpickler(doc_file).load()
+                tfs = pickle.Unpickler(doc_file).load()['stems']
                 
                 vector = np.array(list(tfs.values()))
                 norms[doc_id] = np.sqrt((vector ** 2).sum()) # NORM CALCULS

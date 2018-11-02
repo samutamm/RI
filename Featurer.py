@@ -22,7 +22,7 @@ class Featurer:
         self.ranking_feature_cache = {}
         self.models = models if models is not None else [BM25Model(WeighterVector(index))]
 
-    def getFeatures(self, doc_id, query):
+    def get_features(self, doc_id, query):
         assert doc_id in self.corpus_features.index, "The given document id {} is not present in corpus".format(doc_id)
 
         corpus_feats = dict(zip(self.corpus_features.columns, self.corpus_features.loc[doc_id]))

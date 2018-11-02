@@ -149,7 +149,7 @@ class LinearMetaModel(MetaModel):
                  filename_queries="cacm/cacm.qry",
                  filename_jugements="cacm/cacm.rel"):
         super().__init__(featurers_list)
-        _, example_features = featurers_list.getFeatures(1,"test")
+        _, example_features = featurers_list.get_features(1, "test")
         self.thetas = np.random.randn(len(example_features))
         self.filename_queries = filename_queries
         self.filename_jugements = filename_jugements
@@ -187,7 +187,7 @@ class LinearMetaModel(MetaModel):
         doc_ids = self.featurers_list.index.getDocIds()
         keys = None
         for doc_id in doc_ids:
-            keys, features = self.featurers_list.getFeatures(int(doc_id),query)
+            keys, features = self.featurers_list.get_features(int(doc_id), query)
             feature_scores.append(features)
 
         feature_scores = np.array(feature_scores)

@@ -14,9 +14,6 @@ class IRModel:
         pass
     
     def _count_ranking(self, scores, minimum=0):
-        #scores_unranked = np.array([(str(key),float(scores[key])) for key in scores.keys()], 
-        #                           dtype=(np.character,np.float))
-
         scores_unranked = np.array([(key, scores[key]) for key in scores.keys()])
         scores_ranked = scores_unranked[scores_unranked[:,1].argsort()[::-1]].tolist()
         # let's add all documents that does not contain query words
@@ -26,7 +23,7 @@ class IRModel:
                 scores_ranked.append([str(doc_id), minimum])
                 
         rank = scores_ranked
-        return [[str(rank[i][0]), float(rank[i][1])] for i in range(len(rank))]
+        return [[int(rank[i][0]), float(rank[i][1])] for i in range(len(rank))]
     
 class Vectoriel(IRModel):
     

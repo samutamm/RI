@@ -250,7 +250,7 @@ class Index:
 
         for w in list(dictonnary):
             count = len(self.getTfsForStem(w).keys()) + 1
-            idf_i =  np.log(N / count)
+            idf_i = np.log(N / count)
             idf[w] = idf_i
 
         idfs_by_doc = []
@@ -265,7 +265,7 @@ class Index:
             doc = parser.nextDocument()
 
 
-        return np.concatenate((np.array(lengths), np.array(idfs_by_doc).reshape(-1, 1)), axis=1)
+        return N, np.concatenate((np.array(lengths), np.array(idfs_by_doc).reshape(-1, 1)), axis=1)
 
     
     def getDocIds(self):

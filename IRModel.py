@@ -1,6 +1,9 @@
+import pdb
+
 import numpy as np
 import pandas as pd
 import pickle
+from random import choice
 
 from ParserQuery import QueryParser
 
@@ -146,10 +149,25 @@ class LinearMetaModel(MetaModel):
         _, example_features = featurers_list.getFeatures(1,"test")
         self.thetas = np.random.randn(len(example_features))
 
-    def train(max_iter, filename_queries="cacm/cacm.qry", 
+    def train(max_iter,
+    filename_queries="cacm/cacm.qry", 
     filename_jugements="cacm/cacm.rel"):
-        query_parser = QueryParser()        
+        query_parser = RandomQueryParser()        
         query_parser.initFile(filename_queries, filename_jugements)
+    # train
+        for i in range(max_iter, epsilon, lambda_):
+            q = query_parser.nextRandomTrainQuery()
+            docs = np.array(self.featurers_list.index.getDocIds()).astype(int)
+            pdb.set_trace()
+            irrelevants = docs[~np.array(q.relevants_).astype(int)]
+            d = choice(q.relevants_)
+            dp = choice(irrelevants)
+             
+            scores = self.getScores(q)
+            if 1 - scores[d] + scores[dp] > 0:
+                self.theta += epsilon*(scores[d] - scores[dp])
+                self.theta = (1 - 2*epsilon*lambda_)*self.theta
+
 
     def getScores(self, query):
         """

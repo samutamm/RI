@@ -35,7 +35,8 @@ class Featurer:
         query_corpus_feats = self.calculate_features_query_doc(doc_id, query)
 
         all_feats = {**corpus_feats, **query_feats, **query_corpus_feats}
-        return all_feats, [all_feats[f] for f in np.sort(list(all_feats.keys()))]
+        keys = np.sort(list(all_feats.keys()))
+        return keys, [all_feats[f] for f in keys]
 
 
     def pre_calcul_features(self, pagerank_iters=5):
@@ -71,7 +72,7 @@ class Featurer:
         """
         if query not in self.query_feature_cache:
             idfs = np.array([idf(self.doc_N, len(self.index.getTfsForStem(w).keys())) for w in query_array])
-            self.query_feature_cache[query] = {'query_idf':idfs.sum(), 'query_w_count':idfs.shape[0], 'query_char_count':len(query)}
+            self.query_feature_cache[query] = {'query_idf':idfs.sum(), 'query_char_count':len(query)}
         return self.query_feature_cache[query]
 
     def calculate_features_query_doc(self, doc_id, query):

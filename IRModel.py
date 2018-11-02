@@ -5,7 +5,7 @@ import pandas as pd
 import pickle
 from random import choice
 
-from ParserQuery import QueryParser
+from ParserQuery import QueryParser, RandomQueryParser
 
 class IRModel:
     def __init__(self, weighter):
@@ -149,12 +149,12 @@ class LinearMetaModel(MetaModel):
         _, example_features = featurers_list.getFeatures(1,"test")
         self.thetas = np.random.randn(len(example_features))
 
-    def train(max_iter,
+    def train(self, max_iter,
     filename_queries="cacm/cacm.qry", 
     filename_jugements="cacm/cacm.rel"):
         query_parser = RandomQueryParser()        
         query_parser.initFile(filename_queries, filename_jugements)
-    # train
+        # train
         for i in range(max_iter, epsilon, lambda_):
             q = query_parser.nextRandomTrainQuery()
             docs = np.array(self.featurers_list.index.getDocIds()).astype(int)
@@ -164,10 +164,11 @@ class LinearMetaModel(MetaModel):
             dp = choice(irrelevants)
              
             scores = self.getScores(q)
-            if 1 - scores[d] + scores[dp] > 0:
-                self.theta += epsilon*(scores[d] - scores[dp])
+            score_d = scores.get(int(d))
+            score_dp = scores.get(int(dp))
+            if 1 - score_d + score_dp > 0:
+                self.theta += epsilon*(score_d - scores_dp)
                 self.theta = (1 - 2*epsilon*lambda_)*self.theta
-
 
     def getScores(self, query):
         """

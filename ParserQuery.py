@@ -1,6 +1,7 @@
+import numpy as np
 from random import shuffle
 
-from ParserCACM import ParserCACM 
+from ParserCACM import ParserCACM
 from TextRepresenter import PorterStemmer
 
 class QueryParser():
@@ -26,6 +27,30 @@ class QueryParser():
         i = self.index_
         self.index_ += 1
         return self.queries_[self.query_keys_[i]]
+
+    def get_query_min_max(self, doc_index):
+        if not hasattr(self, 'queries_'):
+            print("Call initFile before get_query_min_max")
+            return None
+        stemmer = PorterStemmer()
+        lengths = []
+        idfs = []
+        query = self.nextQuery()
+
+        while query:
+            text = query.text_
+            stems = stemmer.getTextRepresentation(text)
+            idf = np.sum([len(doc_index.getTfsForStem(w).keys()) for w in stems])
+
+            lengths.append(len(text))
+            idfs.append(idf)
+
+            query = self.nextQuery()
+        lengths = np.array(lengths)
+        idfs = np.array(idfs)
+        return {'query_len_min': lengths.min(), 'query_len_max': lengths.max(),
+                'query_idf_min': idfs.min(), 'query_idf_max': idfs.max()}
+
 
 class RandomQueryParser(QueryParser):
     def trainTestSplit(propTrain = 0.8):

@@ -138,11 +138,24 @@ class BM25Model(IRModel):
         ranking = self._count_ranking(scores)
         return ranking
 
+
+def loss(relevants, irrelevants, scores, lambda_, thetas):
+    norm = lambda_ * np.sqrt((thetas ** 2).sum())
+    cross_product = scores[relevants].to_frame("d")\
+                    .assign(foo=1)\
+                    .merge(scores[irrelevants].to_frame("d_prime").assign(foo=1), on='foo')\
+                    .drop('foo', 1)
+
+    diff = 1 - cross_product["d"] - cross_product["d_prime"]
+    diff[diff < 0] = 0
+    return (diff + norm).mean()
+
+
 class MetaModel(IRModel):
     def __init__(self, featurers_list):
         super().__init__(None)
         self.featurers_list = featurers_list
-    
+
 class LinearMetaModel(MetaModel):
     def __init__(self,
                  featurers_list,
@@ -161,6 +174,7 @@ class LinearMetaModel(MetaModel):
         query_parser.initFile(self.filename_queries, self.filename_jugements)
         query_parser.train_test_split(0.8)
         # train
+        losses = []
         for i in range(max_iter):
             query = query_parser.next_random_train_query()
             docs = np.array(list(self.featurers_list.index.getDocIds())).astype(int)
@@ -179,6 +193,12 @@ class LinearMetaModel(MetaModel):
             if 1 - score_d + score_dp > 0:
                 self.thetas += epsilon*(scores_d - scores_dp)
                 self.thetas = (1 - 2*epsilon*lambda_)*self.thetas
+
+            if i % 1 == 0:
+                l = loss(relevants, irrelevants, scores, lambda_, self.thetas)
+                losses.append(l)
+        return losses
+
 
     def getScores(self, query):
         """

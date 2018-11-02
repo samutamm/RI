@@ -140,19 +140,26 @@ class MetaModel(IRModel):
 class LinearMetaModel(MetaModel):
     def __init__(self, featurers_list):
         super().__init__(featurers_list)
-        self.thetas = {model_name:0, for model_name in featurers_list.keys()}
+        self.thetas = np.random.randn(len(featurers_list.keys()))
 
     def train(max_iter):
         pass
     def getScores(self, query):
         scores = {}
+        feature_scores = []
         for doc_id in self.featurers_list.index.getDocIds():
-            features = self.featurers_list.getFeatures(doc_id,query)
-            score =  0
-            for model_name, theta in self.thetas.items()
-                score += theta*features[model_name]
-            scores[doc_id] = score
-            return scores
+            _,features = self.featurers_list.getFeatures(doc_id,query)
+            feature_scores.append(features)
+
+        feature_scores = np.array(feature_scores)
+        # NORMALIZATION
+        normalized_scores = []
+        for column in feature_scores.T:
+            normalized = (column - column.min()) / (column.max() - column.min())
+            normalized_scores.append(normalized)
+
+        normalized_scores = np.array(normalized_scores).T
+        return normalized_scores.dot(self.thetas)
     
     def getRanking(self, query):
         pass

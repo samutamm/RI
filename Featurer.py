@@ -34,8 +34,8 @@ class Featurer:
         # calcul features for query and corpus
         query_corpus_feats = self.calculate_features_query_doc(doc_id, query)
 
-        return {**corpus_feats, **query_feats, **query_corpus_feats}
-
+        all_feats = {**corpus_feats, **query_feats, **query_corpus_feats}
+        return all_feats, [all_feats[f] for f in np.sort(list(all_feats.keys()))]
 
 
     def pre_calcul_features(self, pagerank_iters=5):

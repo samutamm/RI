@@ -1,6 +1,7 @@
 import pdb
 
 import numpy as np
+import pandas as pd
 import pickle
 from random import choice
 
@@ -145,7 +146,8 @@ class MetaModel(IRModel):
 class LinearMetaModel(MetaModel):
     def __init__(self, featurers_list):
         super().__init__(featurers_list)
-        self.thetas = np.random.randn(len(featurers_list.keys()))
+        _, example_features = featurers_list.getFeatures(1,"test")
+        self.thetas = np.random.randn(len(example_features))
 
     def train(max_iter,
     filename_queries="cacm/cacm.qry", 
@@ -168,21 +170,28 @@ class LinearMetaModel(MetaModel):
 
 
     def getScores(self, query):
-        scores = {}
+        """
+        :param plain text query:
+        :return: pd.Series of scores indexed by doc_id. Access by .loc[int_id]
+        """
         feature_scores = []
-        for doc_id in self.featurers_list.index.getDocIds():
-            _,features = self.featurers_list.getFeatures(doc_id,query)
+        doc_ids = self.featurers_list.index.getDocIds()
+        for doc_id in doc_ids:
+            _,features = self.featurers_list.getFeatures(int(doc_id),query)
             feature_scores.append(features)
 
         feature_scores = np.array(feature_scores)
         # NORMALIZATION
         normalized_scores = []
         for column in feature_scores.T:
-            normalized = (column - column.min()) / (column.max() - column.min())
+            denominator = column.max() - column.min()
+            denominator = 1 if denominator == 0 else denominator
+            normalized = (column - column.min()) / denominator
             normalized_scores.append(normalized)
 
         normalized_scores = np.array(normalized_scores).T
-        return normalized_scores.dot(self.thetas)
+        score = normalized_scores.dot(self.thetas)
+        return pd.Series(score, index=[int(i) for i in doc_ids])
     
     def getRanking(self, query):
         scores = self.getScores(query)

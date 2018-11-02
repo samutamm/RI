@@ -149,13 +149,13 @@ class LinearMetaModel(MetaModel):
         _, example_features = featurers_list.getFeatures(1,"test")
         self.thetas = np.random.randn(len(example_features))
 
-    def train(self, max_iter,
+    def train(self, max_iter, epsilon, lambda_,
     filename_queries="cacm/cacm.qry", 
     filename_jugements="cacm/cacm.rel"):
         query_parser = RandomQueryParser()        
         query_parser.initFile(filename_queries, filename_jugements)
         # train
-        for i in range(max_iter, epsilon, lambda_):
+        for i in range(max_iter):
             q = query_parser.nextRandomTrainQuery()
             docs = np.array(self.featurers_list.index.getDocIds()).astype(int)
             pdb.set_trace()

@@ -25,8 +25,8 @@ def whole_graph(index):
     doc_ids = index.getDocIds()
     for i in doc_ids:
         for j in index.getLinksForDoc(i):
-            I.append(int(i)) # link sortant 
-            J.append(int(j)) # link entrant
+            I.append(int(i) - 1) # link sortant, index commence d'un
+            J.append(int(j) - 1) # link entrant
     I = np.array(I)
     J = np.array(J)
     V = np.ones(I.shape[0])

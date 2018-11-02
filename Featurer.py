@@ -4,6 +4,7 @@ import pandas as pd
 from TextRepresenter import PorterStemmer
 from Weighter import WeighterVector
 from IRModel import BM25Model
+from RandomWalk import whole_graph, PageRank2
 
 def idf(N, num_documents):
     return np.log(N / (num_documents + 1))
@@ -22,17 +23,22 @@ class Featurer:
         self.models = models if models is not None else [BM25Model(WeighterVector(index))]
 
     def getFeatures(self, doc_id, query):
+        assert doc_id in self.corpus_features.index, "The given document id {} is not present in corpus".format(doc_id)
+
+        corpus_feats = dict(zip(self.corpus_features.columns, self.corpus_features.loc[doc_id]))
 
         query_array = self.stemmer.getTextRepresentation(query)
         # calcul features for query
-        query_idf, query_w_count, query_char_count = self.calculate_features_query(query_array, query)
+        query_feats = self.calculate_features_query(query_array, query)
 
         # calcul features for query and corpus
+        query_corpus_feats = self.calculate_features_query_doc(doc_id, query)
 
-        pass
+        return {**corpus_feats, **query_feats, **query_corpus_feats}
 
 
-    def pre_calcul_features(self):
+
+    def pre_calcul_features(self, pagerank_iters=5):
         """
         Let's precalcule features that are independent from the query.
 
@@ -44,8 +50,10 @@ class Featurer:
         """
         doc_N, doc_features = self.index.getDocFeatures()
         # add pagerank
-        df = pd.DataFrame(doc_features, columns=['id', 'len', 'stems', 'idfs'])
-        df['pagerank'] = np.zeros(df.shape[0])
+        df = pd.DataFrame(doc_features[:, 1:], columns=['doc_len', 'doc_stems', 'doc_idfs'], index=doc_features[:, 0])
+        pagerank = PageRank2(whole_graph(self.index))
+        rank = pagerank.compute_mus(pagerank_iters)
+        df['pagerank'] = rank
         return doc_N, df
 
 
@@ -63,7 +71,7 @@ class Featurer:
         """
         if query not in self.query_feature_cache:
             idfs = np.array([idf(self.doc_N, len(self.index.getTfsForStem(w).keys())) for w in query_array])
-            self.query_feature_cache[query] = (idfs.sum(), idfs.shape[0], len(query))
+            self.query_feature_cache[query] = {'query_idf':idfs.sum(), 'query_w_count':idfs.shape[0], 'query_char_count':len(query)}
         return self.query_feature_cache[query]
 
     def calculate_features_query_doc(self, doc_id, query):
@@ -86,7 +94,7 @@ class Featurer:
             self.ranking_feature_cache[query] = rankings
 
         query_rankings = self.ranking_feature_cache[query]
-        return {model_name:query_rankings[model_name].loc[doc_id].values for model_name in query_rankings.keys()}
+        return {model_name:query_rankings[model_name].loc[doc_id].values[0] for model_name in query_rankings.keys()}
 
 
 

@@ -265,7 +265,9 @@ class Index:
             doc = parser.nextDocument()
 
 
-        return N, np.concatenate((np.array(lengths), np.array(idfs_by_doc).reshape(-1, 1)), axis=1)
+        return N, np.concatenate(
+            (np.array(lengths, dtype=object), np.array(idfs_by_doc, dtype=object).reshape(-1, 1)),
+            axis=1)
 
     
     def getDocIds(self):

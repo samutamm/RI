@@ -155,4 +155,6 @@ class LinearMetaModel(MetaModel):
             return scores
     
     def getRanking(self, query):
-        pass
+        scores = self.getScores(query)
+        ranking = self._count_ranking(scores)
+        return ranking

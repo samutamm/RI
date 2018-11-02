@@ -2,6 +2,8 @@ import random
 import numpy as np
 from scipy.sparse import csc_matrix
 
+import pdb
+
 def create_dico_graph(index):
     graph = {}
     doc_ids = index.getDocIds()
@@ -40,19 +42,22 @@ def sub_graph(graph, seeds, number_of_backlinks):
         number_of_backlinks : k
         Returns:
         sub_graph: the graph as a sparse matrix of outgoing links
-        V
+        Vq
     '''
-    #V = seeds.copy()
-    V = set(seeds)
+    # à faire : s'arranger pour avoir des index consistants (tous int ou tous string, pas de float…)
+    seeds = np.array(seeds).astype(float).astype(int)
+    #Vq = seeds.copy()
+    Vq = set(seeds)
     for doc in seeds:
-        #V.extend(seeds[doc, :].nonzero()[1])
-        #V.extend(random.sample(list(seeds[:, doc].nonzero()[0]), number_of_backlinks))
-        V.update(graph[doc, :].nonzero()[1])
+        doc = int(float(doc))
+        #Vq.extend(seeds[doc, :].nonzero()[1])
+        #Vq.extend(random.sample(list(seeds[:, doc].nonzero()[0]), number_of_backlinks))
+        Vq.update(graph[doc, :].nonzero()[1])
         backlinks = list(graph[:, doc].nonzero()[0])
-        V.update(random.sample(backlinks, min(number_of_backlinks, len(backlinks))))
-    V = list(V)
-    sub_graph = graph[V, :][:, V]
-    return sub_graph, V
+        Vq.update(random.sample(backlinks, min(number_of_backlinks, len(backlinks))))
+    Vq = list(Vq)
+    sub_graph = graph[Vq, :][:, Vq]
+    return sub_graph, Vq
 
 
 class RandomWalk:

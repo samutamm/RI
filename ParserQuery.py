@@ -1,3 +1,5 @@
+from random import shuffle
+
 from ParserCACM import ParserCACM 
 from TextRepresenter import PorterStemmer
 
@@ -25,6 +27,15 @@ class QueryParser():
         self.index_ += 1
         return self.queries_[self.query_keys_[i]]
 
+class RandomQueryParser(QueryParser):
+    def trainTestSplit(propTrain = 0.8):
+        shuffle(self.query_keys_) 
+        index = int(len(self.query_keys_)*propTrain)
+        self.query_keys_train_ = self.query_keys_[:index]
+        self.query_keys = self.query_keys_[index:]
+    def nextRandomTrainQuery()
+        i = random.choice(self.query_keys_train_) 
+        return self.queries_[self.query_keys_[i]]
 
 class Query:
     def __init__(self, id_, text_, relevants=[]):

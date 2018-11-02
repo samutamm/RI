@@ -154,11 +154,12 @@ class LinearMetaModel(MetaModel):
         self.filename_queries = filename_queries
         self.filename_jugements = filename_jugements
 
-    def train(max_iter):
+
+    def train(self, max_iter, epsilon, lambda_):
         query_parser = RandomQueryParser()        
         query_parser.initFile(self.filename_queries, self.filename_jugements)
-    # train
-        for i in range(max_iter, epsilon, lambda_):
+        # train
+        for i in range(max_iter):
             q = query_parser.nextRandomTrainQuery()
             docs = np.array(self.featurers_list.index.getDocIds()).astype(int)
             pdb.set_trace()
@@ -167,10 +168,11 @@ class LinearMetaModel(MetaModel):
             dp = choice(irrelevants)
              
             scores = self.getScores(q)
-            if 1 - scores[d] + scores[dp] > 0:
-                self.theta += epsilon*(scores[d] - scores[dp])
+            score_d = scores.get(int(d))
+            score_dp = scores.get(int(dp))
+            if 1 - score_d + score_dp > 0:
+                self.theta += epsilon*(score_d - scores_dp)
                 self.theta = (1 - 2*epsilon*lambda_)*self.theta
-
 
     def getScores(self, query):
         """

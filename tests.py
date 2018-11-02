@@ -12,6 +12,7 @@ from Index import Index, InvertedIndexPlaces
 from Weighter import WeighterBoolean, WeighterVector
 from IRModel import Vectoriel, LanguageModel, BM25Model, LinearMetaModel
 from RandomWalk import *
+from Featurer import Featurer
 
 index = Index("cacm", "cacm/cacm.txt")
 weighter = WeighterVector(index)
@@ -40,5 +41,5 @@ print("PR ranking:", pr_ranking)
 
 ''' LinearMetaModel '''
 fl = Featurer(index)
-lmm = LinearMetaModel(featurers_list)
+lmm = LinearMetaModel(fl)
 

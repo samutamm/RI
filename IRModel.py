@@ -2,10 +2,10 @@ import numpy as np
 import pickle
 
 class IRModel:
-    
     def __init__(self, weighter):
         self.weighter = weighter
-        self.docNorms = weighter.getDocNorms()
+        if weighter is not None:
+            self.docNorms = weighter.getDocNorms()
     
     def getScores(self, query):
         pass
@@ -131,3 +131,28 @@ class BM25Model(IRModel):
         scores = self.getScores(query_vector, k1=k1, b=b) #  k1=1, b=0.75
         ranking = self._count_ranking(scores)
         return ranking
+
+class MetaModel(IRModel):
+    def __init__(self, featurers_list):
+        super().__init__(None)
+        self.featurers_list = featurers_list
+    
+class LinearMetaModel(MetaModel):
+    def __init__(self, featurers_list):
+        super().__init__(featurers_list)
+        self.thetas = {model_name:0, for model_name in featurers_list.keys()}
+
+    def train(max_iter):
+        pass
+    def getScores(self, query):
+        scores = {}
+        for doc_id in self.featurers_list.index.getDocIds():
+            features = self.featurers_list.getFeatures(doc_id,query)
+            score =  0
+            for model_name, theta in self.thetas.items()
+                score += theta*features[model_name]
+            scores[doc_id] = score
+            return scores
+    
+    def getRanking(self, query):
+        pass

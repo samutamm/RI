@@ -1,6 +1,8 @@
 import numpy as np
 import pickle
 
+from ParserQuery import QueryParser
+
 class IRModel:
     def __init__(self, weighter):
         self.weighter = weighter
@@ -142,8 +144,11 @@ class LinearMetaModel(MetaModel):
         super().__init__(featurers_list)
         self.thetas = {model_name:0, for model_name in featurers_list.keys()}
 
-    def train(max_iter):
-        pass
+    def train(max_iter, filename_queries="cacm/cacm.qry", 
+    filename_jugements="cacm/cacm.rel"):
+        query_parser = QueryParser()        
+        query_parser.initFile(filename_queries, filename_jugements)
+
     def getScores(self, query):
         scores = {}
         for doc_id in self.featurers_list.index.getDocIds():

@@ -146,7 +146,7 @@ def loss(relevants, irrelevants, scores, lambda_, thetas):
                     .merge(scores[irrelevants].to_frame("d_prime").assign(foo=1), on='foo')\
                     .drop('foo', 1)
 
-    diff = 1 - cross_product["d"] - cross_product["d_prime"]
+    diff = 1 - cross_product["d"] + cross_product["d_prime"]
     diff[diff < 0] = 0
     return (diff + norm).mean()
 
@@ -163,23 +163,33 @@ class LinearMetaModel(MetaModel):
                  filename_jugements="cacm/cacm.rel"):
         super().__init__(featurers_list)
         keys, example_features = featurers_list.get_features(1, "test")
-        self.thetas = np.random.randn(len(example_features))
+        self.thetas = np.random.randn(len(example_features)) / 10
         self.filename_queries = filename_queries
         self.filename_jugements = filename_jugements
         self.attribute_names = keys
 
+        query_parser = QueryParser()
+        query_parser.initFile(self.filename_queries, self.filename_jugements)
+        self.query_minmax = query_parser.get_query_min_max(self.featurers_list.index)
+        self.doc_ids = np.array(list(featurers_list.index.getDocIds())).astype(int)
+
+        self.feature_cache = {} # save features here to not to recalcul in gradient descent
 
     def train(self, max_iter, epsilon, lambda_):
         query_parser = RandomQueryParser()        
         query_parser.initFile(self.filename_queries, self.filename_jugements)
-        query_parser.train_test_split(0.8)
+        queries = pd.Series([query_parser.queries_[k] for k in query_parser.query_keys_])
         # train
+        print(self.thetas)
+        print("Queries : " + str(queries.shape))
         losses = []
+        docs = self.doc_ids
         for i in range(max_iter):
-            query = query_parser.next_random_train_query()
-            docs = np.array(list(self.featurers_list.index.getDocIds())).astype(int)
+            query = queries[np.random.choice(queries.shape[0])]
+
             relevants = np.array(query.relevants_).astype(int) 
             irrelevants = docs[~np.isin(docs, relevants)]
+
             d = random.choice(relevants)
             dp = random.choice(irrelevants)
              
@@ -194,51 +204,57 @@ class LinearMetaModel(MetaModel):
                 self.thetas += epsilon*(scores_d - scores_dp)
                 self.thetas = (1 - 2*epsilon*lambda_)*self.thetas
 
-            if i % 1 == 0:
-                l = loss(relevants, irrelevants, scores, lambda_, self.thetas)
-                losses.append(l)
+            if i % 5 == 0:
+                print("Iteration {}".format(str(i)))
+                query_losses = 0
+                for query in queries:
+                    relevants = np.array(query.relevants_).astype(int)
+                    irrelevants = docs[~np.isin(docs, relevants)]
+                    scores = self.getScores(query.text_) # depends of thetas
+                    query_losses += loss(relevants, irrelevants, scores, lambda_, self.thetas)
+                losses.append((i, query_losses))
         return losses
 
 
     def getScores(self, query):
         """
         :param plain text query:
-        :return: pd.Series of scores indexed by doc_id. Access by .loc[int_id]
+        :return: pd.Series of scores indexed by doc_id. Access by .get(int_id)
         """
-        query_parser = QueryParser()
-        query_parser.initFile(self.filename_queries, self.filename_jugements)
-        query_minmax = query_parser.get_query_min_max(self.featurers_list.index)
+        if 'scores' not in self.feature_cache: # check cache before calculating again
+            feature_scores = []
 
-        feature_scores = []
-        doc_ids = self.featurers_list.index.getDocIds()
-        keys = None
-        for doc_id in doc_ids:
-            keys, features = self.featurers_list.get_features(int(doc_id), query)
-            feature_scores.append(features)
+            keys = None
+            for doc_id in self.doc_ids:
+                keys, features = self.featurers_list.get_features(int(doc_id), query)
+                feature_scores.append(features)
 
-        feature_scores = np.array(feature_scores)
-        feature_scores = pd.DataFrame(feature_scores, columns=keys)
-        # NORMALIZATION
-        normalized_scores = []
-        for column_name in feature_scores:
-            column = feature_scores[column_name]
-            min = column.min()
-            max = column.max()
-            if column.name == 'query_idf':
-                min = query_minmax['query_idf_min']
-                max = query_minmax['query_idf_max']
-            if column.name == 'query_char_count':
-                min = query_minmax['query_len_min']
-                max = query_minmax['query_len_max']
-            if min == max:
-                print("Columns {} min and max are equal {}".format(column_name, min))
-                continue
-            normalized = (column - min) / (max - min)
-            normalized_scores.append(normalized)
+            feature_scores = np.array(feature_scores)
+            feature_scores = pd.DataFrame(feature_scores, columns=keys)
+            # NORMALIZATION
+            normalized_scores = []
+            for column_name in feature_scores:
+                column = feature_scores[column_name]
+                min = column.min()
+                max = column.max()
+                if column.name == 'query_idf':
+                    min = self.query_minmax['query_idf_min']
+                    max = self.query_minmax['query_idf_max']
+                if column.name == 'query_char_count':
+                    min = self.query_minmax['query_len_min']
+                    max = self.query_minmax['query_len_max']
+                if min == max:
+                    print("Columns {} min and max are equal {}".format(column_name, min))
+                    continue
+                normalized = (column - min) / (max - min)
+                normalized_scores.append(normalized)
 
-        normalized_scores = np.array(normalized_scores).T
+            normalized_scores = np.array(normalized_scores).T
+            self.feature_cache['scores'] = normalized_scores
+
+        normalized_scores = self.feature_cache['scores']
         score = normalized_scores.dot(self.thetas)
-        return pd.Series(score, index=[int(i) for i in doc_ids])
+        return pd.Series(score, index=self.doc_ids)
     
     def getRanking(self, query):
         scores = self.getScores(query)

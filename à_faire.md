@@ -16,5 +16,5 @@ __TME 4__
 __TME 5__
 * implémenter algo HITS
 __TME 6__
-* next_random_train_query renvoie parfois les indices dehors d'array
+evaluation de MetaModel
 * implémenter SVMrank

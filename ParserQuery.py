@@ -57,11 +57,13 @@ class RandomQueryParser(QueryParser):
         random.shuffle(self.query_keys_) 
         index = int(len(self.query_keys_)*propTrain)
         self.query_keys_train_ = self.query_keys_[:index]
-        self.query_keys = self.query_keys_[index:]
+        self.query_keys_test_ = self.query_keys_[index:]
     
     def next_random_train_query(self):
-        i = random.choice(self.query_keys_train_) 
-        return self.queries_[self.query_keys_[i]]
+        return self.queries_[random.choice(self.query_keys_train_)]
+
+    def next_random_test_query(self):
+        return self.queries_[random.choice(self.query_keys_test_)]
 
 class Query:
     def __init__(self, id_, text_, relevants=[]):

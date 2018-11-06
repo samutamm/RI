@@ -174,6 +174,7 @@ class LinearMetaModel(MetaModel):
         self.doc_ids = np.array(list(featurers_list.index.getDocIds())).astype(int)
 
         self.feature_cache = {} # save features here to not to recalcul in gradient descent
+        self.theta_filename="models/linear_metamodel_thetas"
 
     def train(self, max_iter, epsilon, lambda_):
         query_parser = RandomQueryParser()        
@@ -215,6 +216,17 @@ class LinearMetaModel(MetaModel):
                 losses.append((i, query_losses))
         return losses
 
+    def save_weights(self):
+        """
+            Save weights to file.
+        """
+        np.save(open(self.theta_filename, 'wb'), self.thetas)
+    
+    def load_weights(self):
+        """
+            Load weights from file
+        """
+        self.thetas = np.load(open(self.theta_filename, 'rb'))
 
     def getScores(self, query):
         """

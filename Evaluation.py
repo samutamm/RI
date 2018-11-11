@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 
 def remove_b(x):
+    if type(x) != str:
+        return x
     if x[0] != 'b':
         return x
     return x[2:-1]

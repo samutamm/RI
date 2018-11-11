@@ -37,7 +37,8 @@ class ParserCACM(Parser):
         modeW=False;
         modeX=False;
         info=""
-        identifier=""
+        #identifier=""
+        identifier=0
         author=""
         kw=""
         links=""
@@ -48,7 +49,7 @@ class ParserCACM(Parser):
         s=""
         for s in st:
             if(s.startswith(".I")):
-                identifier=s[3:]
+                identifier=int(s[3:])
                 continue
             
             if(s.startswith(".")):
@@ -105,9 +106,11 @@ class ParserCACM(Parser):
             
             if(modeX):
                 l=s.split("\t");
-                if(l[0]!=identifier):
-                    if(len(l[0])>0):
-                        links+=l[0]+";";
+                if l[0] == '':
+                    continue
+                if(int(l[0]) != identifier):
+                    #if(len(l[0])>0):
+                    links+=l[0]+";";
                 
                 continue;
             

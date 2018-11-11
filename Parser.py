@@ -10,8 +10,6 @@ class Parser(object):
     '''
     classdocs
     '''
-    
-
     def __init__(self, begin, end=""):
         '''
         Constructor
@@ -21,9 +19,8 @@ class Parser(object):
         self.file=None
         self.null_byte = "\x00"
         
-    def initFile(self,filename):
+    def initFile(self, filename):
         self.file=open(filename,"r")
-        
         
     def __del__(self):
         if(self.file is not None):

@@ -5,9 +5,6 @@ import pickle
 import numpy as np
 from ast import literal_eval
      
-
-
-
 def get_dictionary_length(count):
     """ 
         Returns list of lengths of dictionaries in string format.
@@ -136,7 +133,7 @@ class Index:
                     
                     N = len(index_places_doc.keys())
                     print("in total " + str(N) + " documents")
-                    for doc_count,doc_id in enumerate(index_places_doc.keys()):
+                    for doc_count, doc_id in enumerate(index_places_doc.keys()):
                         if doc_count % 100 == 0:
                             print(str(doc_count))
                         doc_file.seek(index_places_doc[doc_id])
@@ -146,7 +143,7 @@ class Index:
                             place, length, next_place = iip.get_place_for_word(word)
                             
                             #standardize the length of filename
-                            filename = ' ' * (4 - len(doc_id)) + doc_id
+                            filename = '{:4}'.format(doc_id)
                             
                             # check old value
                             inversed_reader.seek(place)
@@ -215,7 +212,7 @@ class Index:
         
         doc = self.parser.nextDocument()
         while(doc):
-            if doc.getId() == str(doc_id):
+            if doc.getId() == doc_id:
                 return doc.getText()
          
             #iterate
@@ -240,7 +237,7 @@ class Index:
             stems = stemmer.getTextRepresentation(text)
 
             dictonnary.update(stems.values())
-            lengths.append((int(doc_id), len(text), len(stems.keys())))
+            lengths.append((doc_id, len(text), len(stems.keys())))
 
             doc = parser.nextDocument()
 

@@ -32,8 +32,5 @@ class Document(object):
         self.others[key]=value
 
     def __str__(self):
-        return "id="+self.identifier+"\n"+self.text+"\n"+str(self.others)
-
-
-
+        return "id="+str(self.identifier)+"\n"+self.text+"\n"+str(self.others)
 

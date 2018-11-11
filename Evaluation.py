@@ -1,15 +1,7 @@
 import numpy as np
 import pandas as pd
 
-def remove_b(x):
-    if type(x) != str:
-        return x
-    if x[0] != 'b':
-        return x
-    return x[2:-1]
-
 class EvalMeasure:
-    
     def __init__(self):
         pass
     
@@ -47,8 +39,7 @@ class EvalMeasure:
         return table, relevants_N
     
 class PrecisionRecallEval(EvalMeasure):
-    
-    def eval(self, ir_list, nbLevels=10):      
+    def eval(self, ir_list, nbLevels = 20):      
         table,_ = self.calcule_stats(ir_list) # call parent
         
         k_parametres = np.linspace(0,1,nbLevels)
@@ -60,7 +51,6 @@ class PrecisionRecallEval(EvalMeasure):
         return k_parametres, interpolated_precisions
 
 class PrecisionMeanEval(EvalMeasure):
-    
     def eval(self, ir_list):
         table, relevants_N = self.calcule_stats(ir_list) # call parent
         filtered_table = table[table.pertinent == True]
@@ -68,7 +58,6 @@ class PrecisionMeanEval(EvalMeasure):
         
     
 class IRList:
-    
     def __init__(self, query, document_rank):
         self.query = query
         self.document_rank = document_rank

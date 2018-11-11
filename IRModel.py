@@ -19,11 +19,11 @@ class IRModel:
     def getRanking(self, query):
         pass
     
-    def _count_ranking(self, scores, minimum=0):
+    def _count_ranking(self, scores, minimum=0, doc_ids = None):
         scores_unranked = np.array([(key, scores[key]) for key in scores.keys()])
         scores_ranked = scores_unranked[scores_unranked[:,1].argsort()[::-1]].tolist()
         # let's add all documents that does not contain query words
-        all_doc_ids = self.weighter.index.getDocIds()
+        all_doc_ids = doc_ids if doc_ids is not None else self.weighter.index.getDocIds()
         for doc_id in all_doc_ids:
             if int(doc_id) not in scores.keys():
                 scores_ranked.append([str(doc_id), minimum])
@@ -42,6 +42,8 @@ class Vectoriel(IRModel):
             
             term_norm = np.sqrt((np.array(list(term_docs.values())) ** 2).sum())
             for doc_id in term_docs.keys():
+                if doc_id not in self.docNorms:
+                    continue
                 doc_norm = self.docNorms[str(doc_id)]
                 if doc_id not in s:
                     s[doc_id] = 0
@@ -275,5 +277,5 @@ class LinearMetaModel(MetaModel):
     
     def getRanking(self, query):
         scores = self.getScores(query)
-        ranking = self._count_ranking(scores)
+        ranking = self._count_ranking(scores, doc_ids=self.featurers_list.index.getDocIds())
         return ranking

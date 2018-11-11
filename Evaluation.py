@@ -26,7 +26,6 @@ class EvalMeasure:
         
         document_rank = np.array(ir_list.document_rank)
         doc_id = document_rank[:, 0]
-        doc_id = np.vectorize(remove_b)(doc_id)
         scores = document_rank[:,1]
         
         doc_id_column = pd.to_numeric(doc_id, errors='coerce').astype(np.int64)

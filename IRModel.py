@@ -160,11 +160,10 @@ class LinearMetaModel(MetaModel):
                  filename_queries="cacm/cacm.qry",
                  filename_jugements="cacm/cacm.rel"):
         super().__init__(featurers_list)
-        keys, example_features = featurers_list.get_features(1, "test")
-        self.thetas = np.random.randn(len(example_features)) / 10
+        
         self.filename_queries = filename_queries
         self.filename_jugements = filename_jugements
-        self.attribute_names = keys
+        self.initialize_weights()
 
         query_parser = QueryParser()
         query_parser.initFile(self.filename_queries, self.filename_jugements)
@@ -173,8 +172,14 @@ class LinearMetaModel(MetaModel):
 
         self.feature_cache = {} # save features here to not to recalcul in gradient descent
         self.theta_filename="models/linear_metamodel_thetas"
+        
+    def initialize_weights(self):
+        keys, example_features = self.featurers_list.get_features(1, "test")
+        self.attribute_names = keys
+        self.thetas = np.random.randn(len(example_features)) / 10 
 
-    def train(self, max_iter, epsilon, lambda_):
+    def train(self, max_iter, epsilon, lambda_, loss_interval = 5):
+        self.initialize_weights()
         query_parser = RandomQueryParser()        
         query_parser.initFile(self.filename_queries, self.filename_jugements)
         queries = pd.Series([query_parser.queries_[k] for k in query_parser.query_keys_])
@@ -203,7 +208,7 @@ class LinearMetaModel(MetaModel):
                 self.thetas += epsilon*(scores_d - scores_dp)
                 self.thetas = (1 - 2*epsilon*lambda_)*self.thetas
 
-            if i % 5 == 0:
+            if i % loss_interval == 0:
                 print("Iteration {}".format(str(i)))
                 query_losses = 0
                 for query in queries:

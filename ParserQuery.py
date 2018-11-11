@@ -5,19 +5,18 @@ from ParserCACM import ParserCACM
 from TextRepresenter import PorterStemmer
 
 class QueryParser():
-    
     def initFile(self, filename_queries, filename_jugements):
         self.queries_ = {}
         parser = ParserCACM()
         parser.initFile(filename_queries)
         doc = parser.nextDocument()
         while doc:
-            self.queries_[int(doc.getId())] = Query(doc.getId(), doc.getText().replace('\n', ''))
+            self.queries_[doc.getId()] = Query(doc.getId(), doc.getText().replace('\n', ''))
             doc = parser.nextDocument()
         with open(filename_jugements, 'r') as f:
             for line in f:
                 line = line.split(' ') 
-                self.queries_[int(line[0])].add_relevant(line[1])
+                self.queries_[int(line[0])].add_relevant(int(line[1]))
         self.index_ = 0
         self.query_keys_ = list(self.queries_.keys())
         

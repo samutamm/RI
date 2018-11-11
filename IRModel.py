@@ -25,14 +25,13 @@ class IRModel:
         # let's add all documents that does not contain query words
         all_doc_ids = self.weighter.index.getDocIds()
         for doc_id in all_doc_ids:
-            if int(doc_id) not in scores.keys():
-                scores_ranked.append([str(doc_id), minimum])
+            if doc_id not in scores.keys():
+                scores_ranked.append([doc_id, minimum])
                 
         rank = scores_ranked
-        return [[int(rank[i][0]), float(rank[i][1])] for i in range(len(rank))]
+        return rank#[[int(rank[i][0]), float(rank[i][1])] for i in range(len(rank))]
     
 class Vectoriel(IRModel):
-    
     def getScores(self, query, normalized=False):
         wtq = self.weighter.getWeightsForQuery(query)    
         s = {}
@@ -42,12 +41,11 @@ class Vectoriel(IRModel):
             
             term_norm = np.sqrt((np.array(list(term_docs.values())) ** 2).sum())
             for doc_id in term_docs.keys():
-                doc_norm = self.docNorms[str(doc_id)]
+                doc_norm = self.docNorms[doc_id]
                 if doc_id not in s:
                     s[doc_id] = 0
                 norm = term_norm * doc_norm if normalized else 1
-                s[int(doc_id)] += wtq[term] * term_docs[doc_id] / norm
-        
+                s[doc_id] += wtq[term] * term_docs[doc_id] / norm
         return s
     
     def getRanking(self, query, normalized=True):
@@ -272,3 +270,4 @@ class LinearMetaModel(MetaModel):
         scores = self.getScores(query)
         ranking = self._count_ranking(scores)
         return ranking
+

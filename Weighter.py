@@ -98,4 +98,27 @@ class WeighterSchema3(Weighter):
         w_q  = {key:n_D/len(self.index.getTfsForStem(key)) if len(self.index.getTfsForStem(key)) > 0 else 0
         for key in query}
         return w_q 
-    
+    def calculeNorms(self):        
+        index_name = self.index.name
+        index_places_doc_name = self.index.index_places_doc
+        with open(r"indexes/" + index_name + index_places_doc_name, "rb") as index_places_doc_file:
+            unpickler = pickle.Unpickler(index_places_doc_file)
+            index_places_doc = unpickler.load()
+        
+        norms = {} # doc id => norm
+        with open(r"indexes/" + index_name + "_index", "rb") as doc_file:
+            for doc_id in index_places_doc.keys():
+                doc_file.seek(index_places_doc[doc_id])
+                tfs = pickle.Unpickler(doc_file).load()['stems']
+                vector = np.array(list(tfs.values()))
+                norms[doc_id] = np.sqrt((vector ** 2).sum()) # NORM CALCULS
+                
+        with open(self.norm_file, 'wb') as f:
+            pickle.dump(norms, f)
+    def getDocNorms(self):
+        # même norme que pour le Schéma 2.
+        norm_filename = self.norm_file
+        with open(norm_filename, 'rb') as f:
+            return pickle.Unpickler(f).load()
+
+   

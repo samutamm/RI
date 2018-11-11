@@ -1,4 +1,3 @@
-
 from TextRepresenter import PorterStemmer
 import sys
 
@@ -6,8 +5,6 @@ import pickle
 import numpy as np
     
 class Weighter:
-    
-    
     def __init__(self, index):
         self.index = index
         self.stemmer = PorterStemmer()
@@ -28,7 +25,11 @@ class Weighter:
         pass
     
 class WeighterBoolean(Weighter):
-    
+    '''
+        w_t,d = tf_t,d
+        w_t,q = 1       si t appartient à q
+        w_t,q = 0       sinon
+    '''
     def getDocWeightsForDoc(self, idDoc):
         return self.index.getTfsForDoc(idDoc)
     
@@ -43,7 +44,10 @@ class WeighterBoolean(Weighter):
         
         
 class WeighterVector(Weighter):
-    
+    '''
+        w_t,d = tf_t,d
+        w_t,q = tf_t,q
+    '''
     def getDocWeightsForDoc(self, idDoc):
         return self.index.getTfsForDoc(idDoc)
     
@@ -76,3 +80,22 @@ class WeighterVector(Weighter):
         norm_filename = self.norm_file
         with open(norm_filename, 'rb') as f:
             return pickle.Unpickler(f).load()
+
+class WeighterSchema3(Weighter):
+    '''
+        w_t,d = tf_t,d
+        w_t,q = idf_t   si t appartient à q,
+        w_t,q = 0       sinon
+    '''
+    def getDocWeightsForDoc(self, idDoc):
+        return self.index.getTfsForDoc(idDoc)
+    
+    def getDocWeightsForStem(self, stem):
+        return self.index.getTfsForStem(stem)
+    
+    def getWeightsForQuery(self, query):
+        n_D = len(self.index.getDocIds())
+        w_q  = {key:n_D/len(self.index.getTfsForStem(key)) if len(self.index.getTfsForStem(key)) > 0 else 0
+        for key in query}
+        return w_q 
+    

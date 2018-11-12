@@ -20,7 +20,7 @@ class IRModel:
         pass
     
     def _count_ranking(self, scores, minimum=0, doc_ids = None):
-        scores_unranked = np.array([(key, scores[key]) for key in scores.keys()])
+        scores_unranked = np.array([(key, scores[key]) for key in scores.keys()], dtype=object)
         scores_ranked = scores_unranked[scores_unranked[:,1].argsort()[::-1]].tolist()
         # let's add all documents that does not contain query words
         all_doc_ids = doc_ids if doc_ids is not None else self.weighter.index.getDocIds()
@@ -28,7 +28,7 @@ class IRModel:
             if doc_id not in scores.keys():
                 scores_ranked.append([doc_id, minimum])
                 
-        rank = scores_ranked
+        rank = np.array(scores_ranked, dtype=object)
         return rank#[[int(rank[i][0]), float(rank[i][1])] for i in range(len(rank))]
     
 class Vectoriel(IRModel):
@@ -82,7 +82,8 @@ class LanguageModel(IRModel):
         for stem in query.keys():
             dw4s = self.weighter.getDocWeightsForStem(stem)
             tf_t_c = sum(dw4s.values())
-            score_absents += tw4q[stem] * np.log((1-lambd)*(tf_t_c/l_c))
+            with np.errstate(divide='ignore'): # log(0) lance un avertissement "division par 0", desactivé ici
+                score_absents += tw4q[stem] * np.log((1-lambd)*(tf_t_c/l_c))
             for d in dw4s.keys():
                 #print(dw4s[d]/self.l_docs_[d])
                 if d not in scores:

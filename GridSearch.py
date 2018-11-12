@@ -1,4 +1,3 @@
-
 from EvalIRModel import EvalIRModel
 import numpy as np
 
@@ -22,7 +21,7 @@ class GridSearch:
         self.param_values = param_a_values if self.only_one else create_2_var_grid(param_a_values, 
                                                                                   param_b_values)
         
-    def search(self, model):
+    def search(self, model, train_prop=0.8, seed=42):
         results = []
         for values in self.param_values:
             if self.only_one:
@@ -31,6 +30,7 @@ class GridSearch:
                 kwargs = {self.param_a: values[0], self.param_b: values[1]}
             ranking_call = lambda m, text: m.getRanking(text, **kwargs)
             
-            res = self.evaluator.evalModel(model, ranking_call=ranking_call)
+            res = self.evaluator.evalModel(model, ranking_call=ranking_call, train_prop=train_prop, seed=seed, mode='train')
             results.append((kwargs, res["precision_mean"]))
         return results
+

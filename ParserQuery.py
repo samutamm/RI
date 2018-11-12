@@ -51,17 +51,34 @@ class QueryParser():
                 'query_idf_min': idfs.min(), 'query_idf_max': idfs.max()}
 
 
-class RandomQueryParser(QueryParser):
-    def train_test_split(self, propTrain = 0.8):
+class SplitQueryParser(QueryParser):
+    def initFile(self, filename_queries, filename_jugements, train_prop=0.8, seed=42):
+        super().initFile(filename_queries, filename_jugements)
+        random.seed(seed)
         random.shuffle(self.query_keys_) 
-        index = int(len(self.query_keys_)*propTrain)
+        index = int(len(self.query_keys_)*train_prop)
+        self.train_index_ = 0
         self.query_keys_train_ = self.query_keys_[:index]
+        self.test_index_ = 0
         self.query_keys_test_ = self.query_keys_[index:]
-    
-    def next_random_train_query(self):
+
+    def next_train_query(self):
+        if self.train_index_ >= len(self.query_keys_train_):
+           return None
+        i = self.train_index_
+        self.train_index_ += 1
+        return self.queries_[self.query_keys_train_[i]]
+    def next_test_query(self):
+        if self.test_index_ >= len(self.query_keys_test_):
+           return None
+        i = self.test_index_
+        self.test_index_ += 1
+        return self.queries_[self.query_keys_test_[i]]
+      
+    def random_train_query(self):
         return self.queries_[random.choice(self.query_keys_train_)]
 
-    def next_random_test_query(self):
+    def random_test_query(self):
         return self.queries_[random.choice(self.query_keys_test_)]
 
 class Query:

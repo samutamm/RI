@@ -5,7 +5,7 @@ import pandas as pd
 import pickle
 import random
 
-from ParserQuery import QueryParser, RandomQueryParser
+from ParserQuery import QueryParser, SplitQueryParser
 
 class IRModel:
     def __init__(self, weighter):
@@ -71,6 +71,9 @@ class Vectoriel(IRModel):
 #   st = w
 # L(d) somme des tf
 class LanguageModel(IRModel):
+    '''
+        le weighter à fournir est le weighter 2 (WeighterVector, tf_t,d | tf_t,q)
+    '''
     def __init__(self, weighter):
         super().__init__(weighter)
         self.l_docs_ = {int(idx):sum(self.weighter.getDocWeightsForDoc(idx).values()) for idx in self.weighter.index.getDocIds()}    
@@ -181,7 +184,7 @@ class LinearMetaModel(MetaModel):
 
     def train(self, max_iter, epsilon, lambda_, loss_interval = 5):
         self.initialize_weights()
-        query_parser = RandomQueryParser()        
+        query_parser = SplitQueryParser()        
         query_parser.initFile(self.filename_queries, self.filename_jugements)
         queries = pd.Series([query_parser.queries_[k] for k in query_parser.query_keys_])
         # train

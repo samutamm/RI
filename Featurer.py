@@ -95,6 +95,7 @@ class Featurer:
             self.ranking_feature_cache[query] = rankings
 
         query_rankings = self.ranking_feature_cache[query]
+        #import pdb; pdb.set_trace()
         return {model_name:query_rankings[model_name].loc[doc_id].values[0] for model_name in query_rankings.keys()}
 
 

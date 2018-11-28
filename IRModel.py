@@ -91,16 +91,29 @@ class LanguageModel(IRModel):
         tw4q = self.weighter.getWeightsForQuery(query)
         l_c = sum(self.l_docs_.values())
         score_absents = 0
+        scores = {i:0 for i in range(1, len(self.weighter.index.getDocIds())+1)}
         for stem in query.keys():
             dw4s = self.weighter.getDocWeightsForStem(stem)
             tf_t_c = sum(dw4s.values())
             with np.errstate(divide='ignore'): # log(0) lance un avertissement "division par 0", desactivé ici
                 score_absents += tw4q[stem] * np.log((1-lambd)*(tf_t_c/l_c))
+
+            keys = dw4s.keys()
+            for d in self.weighter.index.getDocIds():
+                if d in keys:
+                    scores[d] += tw4q[stem] * np.log(lambd*(dw4s[d]/self.l_docs_[d]) + (1-lambd)*(tf_t_c/l_c) )
+                else:
+                    scores[d] += tw4q[stem] * np.log((1-lambd)*(tf_t_c/l_c))
+        '''
             for d in dw4s.keys():
+                #pdb.set_trace()
                 #print(dw4s[d]/self.l_docs_[d])
                 if d not in scores:
                     scores[d] = 0
                 scores[d] += tw4q[stem] * np.log( lambd*(dw4s[d]/self.l_docs_[d]) + (1-lambd)*(tf_t_c/l_c) )
+                if d == 57:
+                    print(scores[d])
+        '''
         #print("Score minimal :", score_absents)
         return scores, score_absents
     def getRanking(self, query, lambd=1):

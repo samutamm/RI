@@ -46,6 +46,8 @@ class EvalIRModel:
         
         precision_recalls = np.array(precision_recalls)#.mean(axis=0)
         precision_means = np.array(precision_means)
+        precision_20 = np.array(precision_20)
+        cluster_recall_20 = np.array(cluster_recall_20)
         output = {
             'precision_recall':precision_recalls.mean(axis=0),
             'precision_recall_std':precision_recalls.std(axis=0),

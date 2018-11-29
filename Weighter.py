@@ -8,9 +8,9 @@ class Weighter:
     def __init__(self, index):
         self.index = index
         self.stemmer = PorterStemmer()
-        with open(r"indexes/dictionary", "rb") as file:
+        with open(self.index.index_path + "dictionary", "rb") as file:
             self.terms = pickle.load(file)
-        self.norm_file = "indexes/document_norm_" + self.__class__.__name__
+        self.norm_file = self.index.index_path + "document_norm_" + self.__class__.__name__
         self.doc_mean_length = np.array(
             [len(index.getTfsForDoc(doc_id)) for doc_id in index.getDocIds()]
         ).mean()
@@ -45,12 +45,12 @@ class WeighterBoolean(Weighter):
     def calculeNorms(self):        
         index_name = self.index.name
         index_places_doc_name = self.index.index_places_doc
-        with open(r"indexes/" + index_name + index_places_doc_name, "rb") as index_places_doc_file:
+        with open(self.index.index_path + index_name + index_places_doc_name, "rb") as index_places_doc_file:
             unpickler = pickle.Unpickler(index_places_doc_file)
             index_places_doc = unpickler.load()
         
         norms = {} # doc id => norm
-        with open(r"indexes/" + index_name + "_index", "rb") as doc_file:
+        with open(self.index.index_path + index_name + "_index", "rb") as doc_file:
             for doc_id in index_places_doc.keys():
                 doc_file.seek(index_places_doc[doc_id])
                 tfs = pickle.Unpickler(doc_file).load()['stems']
@@ -84,12 +84,12 @@ class WeighterVector(Weighter):
     def calculeNorms(self):        
         index_name = self.index.name
         index_places_doc_name = self.index.index_places_doc
-        with open(r"indexes/" + index_name + index_places_doc_name, "rb") as index_places_doc_file:
+        with open(self.index.index_path + index_name + index_places_doc_name, "rb") as index_places_doc_file:
             unpickler = pickle.Unpickler(index_places_doc_file)
             index_places_doc = unpickler.load()
         
         norms = {} # doc id => norm
-        with open(r"indexes/" + index_name + "_index", "rb") as doc_file:
+        with open(self.index.index_path + index_name + "_index", "rb") as doc_file:
             for doc_id in index_places_doc.keys():
                 doc_file.seek(index_places_doc[doc_id])
                 tfs = pickle.Unpickler(doc_file).load()['stems']
@@ -125,12 +125,12 @@ class WeighterSchema3(Weighter):
     def calculeNorms(self):        
         index_name = self.index.name
         index_places_doc_name = self.index.index_places_doc
-        with open(r"indexes/" + index_name + index_places_doc_name, "rb") as index_places_doc_file:
+        with open(self.index.index_path + index_name + index_places_doc_name, "rb") as index_places_doc_file:
             unpickler = pickle.Unpickler(index_places_doc_file)
             index_places_doc = unpickler.load()
         
         norms = {} # doc id => norm
-        with open(r"indexes/" + index_name + "_index", "rb") as doc_file:
+        with open(self.index.index_path + index_name + "_index", "rb") as doc_file:
             for doc_id in index_places_doc.keys():
                 doc_file.seek(index_places_doc[doc_id])
                 tfs = pickle.Unpickler(doc_file).load()['stems']

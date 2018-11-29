@@ -36,12 +36,21 @@ class Vectoriel(IRModel):
         wtq = self.weighter.getWeightsForQuery(query)    
         s = {}
         
+        norms_ids_in_string = isinstance(list(self.docNorms.keys())[0], str)
+        #if not norms_ids_in_string:
+            #import pdb; pdb.set_trace()
+
+        
         for term in query.keys():
-            term_docs = self.weighter.getDocWeightsForStem(term)
-            
+            term_docs = self.weighter.getDocWeightsForStem(term)            
             term_norm = np.sqrt((np.array(list(term_docs.values())) ** 2).sum())
             for doc_id in term_docs.keys():
-                doc_norm = self.docNorms[doc_id]
+                
+                #import pdb; pdb.set_trace()
+                if norms_ids_in_string:
+                    doc_norm = self.docNorms[str(doc_id)]
+                else:
+                    doc_norm = self.docNorms[doc_id]
                 if doc_id not in s:
                     s[doc_id] = 0
                 norm = term_norm * doc_norm if normalized else 1

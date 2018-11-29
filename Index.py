@@ -13,7 +13,7 @@ def get_dictionary_length(count):
     """
     if count == 0:
         return 0
-    return count * 16
+    return count * 20
 
 class InvertedIndexPlaces:
     
@@ -58,11 +58,14 @@ class InvertedIndexPlaces:
 
 class Index:
     
-    def __init__(self, name, filename):
+    def __init__(self, name, filename, index_path = 'indexes/'):
         self.name = name
         self.index_places_doc = "_index_places_doc"
         self.index_places_stem = "_index_places_stem"
         self.filename = filename
+        self.index_path = index_path
+        
+        self.doc_id_length = 8
         # parser, textRepresenter
         # docs, stems, docFrom
     
@@ -72,7 +75,7 @@ class Index:
         
         stemmer = PorterStemmer()
         dictionary = set()
-        f = open(r"indexes/" + str(self.name) + "_index", "wb") # ASCII as BYTES mode
+        f = open(self.index_path + str(self.name) + "_index", "wb") # ASCII as BYTES mode
         doc_start_indexes = {}
 
         doc = self.parser.nextDocument()
@@ -80,7 +83,7 @@ class Index:
             text = doc.getText()
             doc_id = doc.getId()
 
-            link_string = doc.get("links")
+            link_string = doc.get("links") if "links" in doc.others else ""
             if len(link_string) == 0:
                 links = []
             else:
@@ -103,29 +106,29 @@ class Index:
 
         f.close()
 
-        with open(r"indexes/" + self.name + self.index_places_doc, "wb") as output_file:
+        with open(self.index_path + self.name + self.index_places_doc, "wb") as output_file:
             pickle.dump(doc_start_indexes, output_file, protocol=-1)
-        with open(r"indexes/dictionary", "wb") as output_file:
+        with open(self.index_path + "dictionary", "wb") as output_file:
             pickle.dump(dictionary, output_file, protocol=-1)
         return dictionary
     
     def inversedIndexation(self, dictionary):
-        with open("indexes/" + self.name + self.index_places_doc, 'rb') as index_places_doc_file:
+        with open(self.index_path + self.name + self.index_places_doc, 'rb') as index_places_doc_file:
             unpickler = pickle.Unpickler(index_places_doc_file)
             index_places_doc = unpickler.load()
             
         iip = InvertedIndexPlaces(dictionary)
         
-        with open(r"indexes/" + str(self.name) + "_inversed", "wb") as inversed_writer:
-            with open(r"indexes/" + str(self.name) + "_inversed", "rb") as inversed_reader:
-                with open(r"indexes/" + self.name + "_index", "rb") as doc_file:
+        with open(self.index_path + str(self.name) + "_inversed", "wb") as inversed_writer:
+            with open(self.index_path + str(self.name) + "_inversed", "rb") as inversed_reader:
+                with open(self.index_path + self.name + "_index", "rb") as doc_file:
                     for doc_id in index_places_doc.keys():
                         doc_file.seek(index_places_doc[doc_id])
                         tfs = pickle.load(doc_file)['stems']
 
                         iip.add_file_to_word(doc_id, tfs.keys())
                     iip.count_word_fileplaces()
-                    iip.save_places_to_file(r"indexes/" + self.index_places_stem)
+                    iip.save_places_to_file(self.index_path + self.index_places_stem)
                     # write inversed index full of space
                     file_total_length = iip.get_indexfile_total_length()
                     inversed_writer.seek(0)
@@ -143,7 +146,8 @@ class Index:
                             place, length, next_place = iip.get_place_for_word(word)
                             
                             #standardize the length of filename
-                            filename = '{:4}'.format(doc_id)
+                            filename = str(doc_id).zfill(self.doc_id_length)
+                            
                             
                             # check old value
                             inversed_reader.seek(place)
@@ -152,8 +156,10 @@ class Index:
                             if len(old_string_value) == 0: # no hits yet
                                 old_dico = {}
                             else:
-                                old_dico = literal_eval(old_string_value.decode()) # ASCII as bytes to str
-           
+                                try:
+                                    old_dico = literal_eval(old_string_value.decode()) # ASCII as bytes to str
+                                except:
+                                    import pdb; pdb.set_trace()
                             
                             old_dico[filename] = format(tfs[word],'04d')
                                                       
@@ -171,10 +177,10 @@ class Index:
         self.inversedIndexation(self.dico)
 
     def _readDocIndex(self, doc_id):
-        with open(r"indexes/" + self.name + self.index_places_doc, 'rb') as index_places_file:
+        with open(self.index_path + self.name + self.index_places_doc, 'rb') as index_places_file:
             unpickler = pickle.Unpickler(index_places_file)
             index_places = unpickler.load()
-        with open(r"indexes/" + self.name + "_index", "rb") as f:
+        with open(self.index_path + self.name + "_index", "rb") as f:
             f.seek(index_places[doc_id])
             unpickler = pickle.Unpickler(f)
             tfs = unpickler.load()
@@ -187,7 +193,7 @@ class Index:
         return self._readDocIndex(doc_id)['links']
     
     def getTfsForStem(self, word):
-        with open(r"indexes/" + self.index_places_stem, 'rb') as index_places_f:
+        with open(self.index_path + self.index_places_stem, 'rb') as index_places_f:
             unpickler = pickle.Unpickler(index_places_f)
             index_places = unpickler.load()
         word_start_indexes = index_places['word_start_indexes']
@@ -200,7 +206,7 @@ class Index:
         place = word_start_indexes[idx]
         length = word_lengths[idx]
         
-        with open(r"indexes/" + str(self.name) + "_inversed", "rb") as inversed_reader:
+        with open(self.index_path + str(self.name) + "_inversed", "rb") as inversed_reader:
             inversed_reader.seek(place)
             dico_str = inversed_reader.read(length)
         dico = literal_eval(dico_str.decode())
@@ -268,5 +274,5 @@ class Index:
 
     
     def getDocIds(self):
-        with open(r"indexes/" + self.name + self.index_places_doc, "rb") as doc_file:
+        with open(self.index_path + self.name + self.index_places_doc, "rb") as doc_file:
             return pickle.load(doc_file).keys()

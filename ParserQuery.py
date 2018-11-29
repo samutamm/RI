@@ -7,6 +7,7 @@ from TextRepresenter import PorterStemmer
 class QueryParser():
     def initFile(self, filename_queries, filename_jugements):
         self.queries_ = {}
+        self.subtopic_names = {}
         parser = ParserCACM()
         parser.initFile(filename_queries)
         doc = parser.nextDocument()
@@ -15,8 +16,24 @@ class QueryParser():
             doc = parser.nextDocument()
         with open(filename_jugements, 'r') as f:
             for line in f:
-                line = line.split(' ') 
-                self.queries_[int(line[0])].add_relevant(int(line[1]))
+                line = line.strip()
+                if len(line) == 0:
+                    continue
+                line = line.split(' ')
+                if line[0] == '#':
+                    if line[2] != 'Description':
+                        query_id = line[1][1:]
+                        topic_local_id = line[2]  # this is not unique, depends of query
+                        topic_name = ' '.join(line[3:])
+                        if query_id not in self.subtopic_names:
+                            self.subtopic_names[query_id] = {}
+                        else:
+                            self.subtopic_names[query_id][topic_local_id] = topic_name
+                    continue
+                id_query = int(line[0])
+                id_doc = int(line[1])
+                subtopic = int(line[3])
+                self.queries_[id_query].add_relevant(id_doc, subtopic)
         self.index_ = 0
         self.query_keys_ = list(self.queries_.keys())
         
@@ -82,11 +99,12 @@ class SplitQueryParser(QueryParser):
         return self.queries_[random.choice(self.query_keys_test_)]
 
 class Query:
-    def __init__(self, id_, text_, relevants=[]):
+    def __init__(self, id_, text_, relevants={}):
         self.id_ = id_
         self.text_ = text_
         self.relevants_ = relevants
 
-    def add_relevant(self, relevant):
+    def add_relevant(self, relevant, topic):
         if relevant not in self.relevants_:
-            self.relevants_.append(relevant)
+            self.relevants_[relevant] = topic
+

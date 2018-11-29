@@ -15,7 +15,7 @@ class EvalMeasure:
             -pertinent : boolean, if list element is relevant
         """
         relevants = ir_list.query.relevants_
-        relevants = np.array(relevants, dtype=int)
+        relevants = np.array(list(relevants.keys()), dtype=int)
         relevants_N = len(relevants)
         
         document_rank = np.array(ir_list.document_rank)
@@ -64,7 +64,7 @@ class PrecisionAtN(EvalMeasure):
 class ClusterRecallAtN(EvalMeasure):
     def eval(self, ir_list, n=20):
         topics_recall = set()
-        for i, doc in enumerate(ir_list.document_rank):
+        for i, doc in enumerate(ir_list.document_rank[:, 0]):
             if i == n:
                 break
             if doc in ir_list.query.relevants_:

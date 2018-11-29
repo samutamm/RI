@@ -24,7 +24,7 @@ class EvalMeasure:
         
         doc_id_column = pd.to_numeric(doc_id, errors='coerce').astype(np.int64)
         score_column = pd.to_numeric(scores, errors='coerce').astype(np.float64)
-        # l'air le méme que exemple dans le slide 109
+        # l'air le même que exemple dans le slide 109
         table = pd.DataFrame({'doc_id':doc_id_column, 'score':score_column})
         
         table['pertinent'] = table.doc_id.isin(relevants)
@@ -56,6 +56,22 @@ class PrecisionMeanEval(EvalMeasure):
         filtered_table = table[table.pertinent == True]
         return filtered_table.precision.sum() / relevants_N
         
+class PrecisionAtN(EvalMeasure):
+    def eval(self, ir_list, n=20):
+        table, _ = self.calcule_stats(ir_list)
+        return table.precision[n]
+
+class ClusterRecallAtN(EvalMeasure):
+    def eval(self, ir_list, n=20):
+        topics_recall = set()
+        for i, doc in enumerate(ir_list.document_rank):
+            if i == n:
+                break
+            if doc in ir_list.query.relevants_:
+                topics_recall.add(ir_list.query.relevants_[doc])
+        n_topics = len(set(ir_list.query.relevants_.values()))
+        return len(topics_recall)/n_topics
+
     
 class IRList:
     def __init__(self, query, document_rank):

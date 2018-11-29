@@ -12,7 +12,7 @@ class QueryParser():
         parser.initFile(filename_queries)
         doc = parser.nextDocument()
         while doc:
-            self.queries_[doc.getId()] = Query(doc.getId(), doc.getText().replace('\n', ''))
+            self.queries_[doc.getId()] = Query(doc.getId(), doc.getText().replace('\n', ''), {})
             doc = parser.nextDocument()
         with open(filename_jugements, 'r') as f:
             for line in f:
@@ -99,7 +99,7 @@ class SplitQueryParser(QueryParser):
         return self.queries_[random.choice(self.query_keys_test_)]
 
 class Query:
-    def __init__(self, id_, text_, relevants={}):
+    def __init__(self, id_, text_, relevants):
         self.id_ = id_
         self.text_ = text_
         self.relevants_ = relevants

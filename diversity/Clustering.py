@@ -26,6 +26,12 @@ class ClusteringDiversifier:
     def diversify(self, ir_list,
                   by_top_n = 100,
                   n_clusters=5):
+        """
+        :param ir_list:
+        :param by_top_n:
+        :param n_clusters:
+        :return: Top n document in defined order and order of clusters.
+        """
         rank = ir_list.document_rank[:by_top_n, :]
         data = pd.DataFrame({'text': [self.index.getStrDoc(i) for i in rank[:, 0]],
                              'id': rank[:, 0],
@@ -55,6 +61,9 @@ class ClusteringDiversifier:
             cluster_order = cluster_sizes.sort_values(by='result', ascending=False)['cluster']
         #TODO similarite docs representant
 
+
+        cluster_order = cluster_order.values
+
         ids_by_clusters = {}
         for cl in clusters:
             ids_by_clusters[cl] = data[data['cluster'] == cl]['id'].values.tolist()
@@ -68,9 +77,6 @@ class ClusteringDiversifier:
                 diversified.append(ids.pop(0))
             i += 1
 
-        # https://stackoverflow.com/questions/23482668/sorting-by-a-custom-list-in-pandas
-        data.id = data.id.astype("category")
-        data.id.cat.set_categories(diversified, inplace=True)
-        data = data.sort_values(by="id", ascending=)
-        return data, cluster_order, diversified
+        data = data.set_index('id')
+        return data.loc[diversified], cluster_order
 

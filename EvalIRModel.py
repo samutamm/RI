@@ -54,7 +54,9 @@ class EvalIRModel:
             'precision_mean':precision_means.mean(),
             'precision_mean_std':precision_means.std(),
             'precision_at_20':precision_20.mean(),
-            'cluster_recall_at_20':cluster_recall_20.mean()
+            'precision_at_20_std':precision_20.std(),
+            'cluster_recall_at_20':cluster_recall_20.mean(),
+            'cluster_recall_at_20_std':cluster_recall_20.std()
         }
         return output
        

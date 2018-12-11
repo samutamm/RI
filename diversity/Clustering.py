@@ -23,16 +23,16 @@ class ClusteringDiversifier:
         self.index = index
         self.cluster_order_by = cluster_order_by
 
-    def diversify(self, ir_list,
+    def diversify(self, document_rank,
                   by_top_n = 100,
                   n_clusters=5):
         """
-        :param ir_list:
+        :param document_rank:
         :param by_top_n:
         :param n_clusters:
         :return: Top n document in defined order and order of clusters.
         """
-        rank = ir_list.document_rank[:by_top_n, :]
+        rank = document_rank[:by_top_n, :]
         data = pd.DataFrame({'text': [self.index.getStrDoc(i) for i in rank[:, 0]],
                              'id': rank[:, 0],
                              'rank': np.arange(1, rank.shape[0] + 1)})
@@ -78,5 +78,5 @@ class ClusteringDiversifier:
             i += 1
 
         data = data.set_index('id')
-        return data.loc[diversified], cluster_order
+        return data.loc[diversified].reset_index('id'), cluster_order
 

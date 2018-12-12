@@ -39,7 +39,7 @@ class ClusteringDiversifier:
 
         data.text = data.text.apply(str.lower)
 
-        vectorizer = CountVectorizer()
+        vectorizer = CountVectorizer(ngram_range=(3, 3), analyzer='char')
         bow_matrix = vectorizer.fit_transform(data.text)
 
         model = SpectralClustering(n_clusters=n_clusters, affinity='nearest_neighbors')

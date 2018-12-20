@@ -12,12 +12,14 @@ class GreedyRanking:
         self.index = index
         self.sim1 = cosine_similarity
         self.sim2 = cosine_similarity
-        self.value_function = make_mmr(self.sim1)
 
         self.all_doc_ids = list(index.getDocIds())
         self.doc_vectors, self.identity2index, self.vectorizer = calculate_vector_presentation(self.index, self.all_doc_ids)
 
         self.query_vector_cache = {}
+
+    def set_value_function(self, alpha):
+        self.value_function = make_mmr(self.sim1, alpha = alpha)
 
     def diversified_rank(self, document_list, query_Q, k = 20):
         print("Query length : " + str(len(query_Q)))

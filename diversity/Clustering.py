@@ -32,6 +32,7 @@ class ClusteringDiversifier:
         :param n_clusters:
         :return: Top n document in defined order and order of clusters.
         """
+        assert by_top_n >= n_clusters, "The number of cluster should be less or egal with number of docs"
         rank = document_rank[:by_top_n, :]
         data = pd.DataFrame({'text': [self.index.getStrDoc(i) for i in rank[:, 0]],
                              'id': rank[:, 0],
@@ -39,12 +40,14 @@ class ClusteringDiversifier:
 
         data.text = data.text.apply(str.lower)
 
-        vectorizer = CountVectorizer(ngram_range=(3, 3), analyzer='char')
-        bow_matrix = vectorizer.fit_transform(data.text)
+        if by_top_n > n_clusters:
+            vectorizer = CountVectorizer(ngram_range=(3, 3), analyzer='char')
+            bow_matrix = vectorizer.fit_transform(data.text)
 
-        model = SpectralClustering(n_clusters=n_clusters, affinity='nearest_neighbors')
-        prediction = model.fit_predict(bow_matrix)
-
+            model = SpectralClustering(n_clusters=n_clusters, affinity='nearest_neighbors')
+            prediction = model.fit_predict(bow_matrix)
+        else:
+            prediction = np.arange(n_clusters)
         data['cluster'] = prediction
 
         data = data.drop(columns='text')

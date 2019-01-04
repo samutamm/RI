@@ -20,7 +20,7 @@ class EvalMeasure:
         
         document_rank = np.array(ir_list.document_rank)
         doc_id = document_rank[:, 0]
-        scores = document_rank[:,1]
+        scores = document_rank[:, 1]
         
         doc_id_column = pd.to_numeric(doc_id, errors='coerce').astype(np.int64)
         score_column = pd.to_numeric(scores, errors='coerce').astype(np.float64)
@@ -59,7 +59,8 @@ class PrecisionMeanEval(EvalMeasure):
 class PrecisionAtN(EvalMeasure):
     def eval(self, ir_list, n=20):
         table, _ = self.calcule_stats(ir_list)
-        return table.precision[n]
+        # index origin = 0
+        return table.precision[n-1]
 
 class ClusterRecallAtN(EvalMeasure):
     def eval(self, ir_list, n=20):

@@ -16,6 +16,12 @@ class GreedyRankingMMR:
         # changé à chaque appel de diversify :
         self.docs_score = None
         self.alpha = None
+
+        # pour baseline BM25 k1=2 b=0.95
+        # sur dataset CLEF
+        self.max_score = 31.56267059141227
+        self.min_score = 0
+
     def vectorize(self, index):
         docs_list = list(index.getDocIds())
         doc_strings = []
@@ -31,14 +37,18 @@ class GreedyRankingMMR:
         by reordering the first 'order_n' slots
         using the first 'doc_limit' docs.
         '''
-        self.docs_score = {doc_rank[0]:doc_rank[1] for doc_rank in document_rank}
+        if document_rank[0, 1] > self.max_score:
+            print("Attention, score de la baseline > score max de la normalisation")
+        if document_rank[-1, 1] < self.min_score:
+            print("Attention, score de la baseline < score min de la normalisation")
+
+        self.docs_score = {doc_rank[0]:doc_rank[1] for doc_rank in document_rank[:doc_limit]}
         self.alpha = alpha
         top_docs = document_rank[:doc_limit, 0]
         new_docs_list = self.diversified_rank(top_docs, query, order_n)
         new_docs_rank = np.array([[doc_id, self.docs_score[doc_id]] for doc_id in new_docs_list])
         return new_docs_rank
     def diversified_rank(self, docs_list, query, k = 20):
-        print("Query length :", len(query))
         pivot = []
         for i in range(k):
             best_doc_id = docs_list[0]
@@ -54,12 +64,15 @@ class GreedyRankingMMR:
         return pivot
     def value_function(self, doc_id, pivot, query=None):
         return self.alpha * self.sim1(doc_id, query) - (1-self.alpha)*self.sim_psi(doc_id, pivot)
-    def sim1_score(self, doc_id, query=None):
+    def sim1_score(self, doc_id, query=None, normalize=True):
         '''
         Similarité entre le doc et la requête
         Renvoie le score calculé par la baseline, normalisé
         '''
-        return self.docs_score[doc_id]
+        if normalize:
+            return (self.docs_score[doc_id] - self.min_score) / (self.max_score - self.min_score)
+        else:
+            return self.docs_score[doc_id]
     def sim1_cos(self, doc_id, query):
         '''
         Similarité entre le doc et la requête
